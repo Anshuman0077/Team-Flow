@@ -1,5 +1,5 @@
-import { HeroHeader } from "@/app/(marketing)/_components/header";
-import HeroSection from "@/components/hero-section";
+import { HeroHeader } from "@/components/header";
+import HeroSection from "@/app/(marketing)/_components/hero-section";
 import { Button } from "@/components/ui/button";
 import { ThemeToggle } from "@/components/ui/themeToggle";
 import Image from "next/image";
