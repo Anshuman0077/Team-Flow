@@ -1,3 +1,5 @@
+"use client";
+
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { 
@@ -20,18 +22,28 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { LogoutLink, PortalLink,  } from "@kinde-oss/kinde-auth-nextjs/components";
+import { useSuspenseQuery } from "@tanstack/react-query";
+import { orpc } from "@/lib/orpc";
+import { getAvatar } from "@/lib/get-avatar";
+
 
 interface UserNavProps {
     className?: string;
 }
 
 export function UserNav({ className }: UserNavProps) {
-    const user = {
-        picture: "https://avatars.githubusercontent.com/u/88566759?v=4",
-        given_name: "Jan Marshal",
-        email: "jan.marshal@example.com"
-    };
+    // const user = {
+    //     picture: "https://avatars.githubusercontent.com/u/88566759?v=4",
+    //     given_name: "Jan Marshal",
+    //     email: "jan.marshal@example.com"
+    // };
 
+
+    const { 
+       data: {user},
+    } = useSuspenseQuery(orpc.workspace.list.queryOptions())
+
+   
     return (
         <DropdownMenu>
             <DropdownMenuTrigger asChild>
@@ -43,12 +55,12 @@ export function UserNav({ className }: UserNavProps) {
                     {/* User Avatar */}
                     <Avatar className="h-8 w-8 border-2 border-background shadow-sm">
                         <AvatarImage
-                            src={user.picture}
+                            src={getAvatar(user.picture , user.email!)}
                             alt="User profile picture"
                             className="object-cover"
                         />
                         <AvatarFallback className="bg-gradient-to-br from-blue-500 to-purple-600 text-white text-xs font-medium">
-                            {user.given_name.slice(0, 2).toUpperCase()}
+                            {user.given_name?.slice(0, 2).toUpperCase()}
                         </AvatarFallback>
                     </Avatar>
                 </Button>
@@ -65,11 +77,11 @@ export function UserNav({ className }: UserNavProps) {
                     <div className="flex items-center gap-3">
                         <Avatar className="h-10 w-10">
                             <AvatarImage
-                                src={user.picture}
+                                src={getAvatar(user.picture , user.email!)}
                                 alt="User profile picture"
                             />
                             <AvatarFallback className="bg-gradient-to-br from-blue-500 to-purple-600 text-white">
-                                {user.given_name.slice(0, 2).toUpperCase()}
+                                {user.given_name?.slice(0, 2).toUpperCase()}
                             </AvatarFallback>
                         </Avatar>
                         <div className="flex flex-col space-y-1">
@@ -101,13 +113,7 @@ export function UserNav({ className }: UserNavProps) {
 
                     </DropdownMenuItem>
                 </DropdownMenuGroup>
-
                 <DropdownMenuSeparator />
-
-                {/* Support Section */}
-           
-
-                
                 {/* Logout Section */}
                 <DropdownMenuItem asChild className="flex  items-center gap-3 px-3 py-2.5 cursor-pointer text-red-600 hover:bg-red-50 hover:text-red-700">
                     <LogoutLink>
