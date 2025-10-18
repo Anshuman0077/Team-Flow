@@ -1,3 +1,4 @@
+// CreateWorkspace.tsx
 "use client"
 
 import { Button } from "@/components/ui/button"
@@ -7,7 +8,6 @@ import { Plus } from "lucide-react"
 import { useState } from "react"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
-import { z } from "zod"
 import {
     Form,
     FormControl,
@@ -18,44 +18,56 @@ import {
     FormMessage,
 } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
-
-// Define the form validation schema using Zod
-const formSchema = z.object({
-    workspaceName: z.string().min(2, {
-        message: "Workspace name must be at least 2 characters.",
-    }),
-})
+// Import the schema and type from the separate file
+// import { workspaceFormSchema, WorkspaceFormValues } from "./workspace-schema"
+import { WorkspaceFormValues , workspaceFormSchema } from "../../schemas/workspace-schema"
+import { useMutation, useQueryClient } from "@tanstack/react-query"
+import { orpc } from "@/lib/orpc"
+import { toast } from "sonner"
 
 export function CreateWorkSpace() {
     const [open, setOpen] = useState(false)
+    const queryClient = useQueryClient()
 
     // Initialize the form with useForm hook
-    // 1. resolver: connects Zod schema with react-hook-form
-    // 2. defaultValues: sets initial form values
-    const form = useForm<z.infer<typeof formSchema>>({
-        resolver: zodResolver(formSchema),
+    // Using the imported schema and type
+    const form = useForm<WorkspaceFormValues>({
+        resolver: zodResolver(workspaceFormSchema),
         defaultValues: {
-            workspaceName: "",
+            name: "",
         },
     })
+
+
+    const createWorkspaceMutation = useMutation(
+        orpc.workspace.create.mutationOptions({
+            onSuccess: (newWorkspace) => {
+                toast.success(
+                    `Workspace ${newWorkspace.workspaceName} created successfully`
+                );
+                queryClient.invalidateQueries({
+                    queryKey: orpc.workspace.list.queryKey(),
+                });
+                form.reset();
+                setOpen(false);
+            },
+            onError: (error) => {
+                console.error("Workspace creation error:", error);
+                toast.error("Failed to create workspace. Please try again!");
+            }
+        })
+    );
 
     /**
      * Handle form submission
      * @param values - The form data that has been validated by Zod schema
      */
-    function onSubmit(values: z.infer<typeof formSchema>) {
-        console.log("Form submitted with values:", values);
+    function onSubmit(values: WorkspaceFormValues , ) {
+        // console.log("Form submitted with values:", values);
+        createWorkspaceMutation.mutate(values)
         // Here you would typically:
         // 1. Send data to your API
         // 2. Update state
-        // 3. Close the dialog
-        // 4. Reset the form
-        
-        // For now, just log and close dialog
-        setOpen(false);
-        
-        // Optional: Reset the form after submission
-        form.reset();
     }
 
     return (
@@ -79,7 +91,7 @@ export function CreateWorkSpace() {
             </Tooltip>
             
             {/* Dialog content that appears when triggered */}
-            <DialogContent className="sm:max-w-[425px]"> {/* Fixed typo: sm:mx-w -> sm:max-w */}
+            <DialogContent className="sm:max-w-[425px]">
                 <DialogHeader>
                     <DialogTitle>
                         Create Workspace
@@ -99,7 +111,7 @@ export function CreateWorkSpace() {
                         {/* Form field for workspace name */}
                         <FormField
                             control={form.control}
-                            name="workspaceName"  // This must match the schema field name
+                            name="name"  // This must match the schema field name
                             render={({ field }) => (
                                 <FormItem>
                                     <FormLabel>Workspace Name</FormLabel>
@@ -138,8 +150,8 @@ export function CreateWorkSpace() {
                             >
                                 Cancel
                             </Button>
-                            <Button type="submit">
-                                Create Workspace
+                            <Button disabled={createWorkspaceMutation.isPending} type="submit">
+                               {createWorkspaceMutation.isPending ? "Creating..." : "Create Workspace"}
                             </Button>
                         </div>
                     </form>
