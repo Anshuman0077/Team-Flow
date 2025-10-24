@@ -26,7 +26,6 @@ const WorkSpaceLayout = async ({children} : {children: ReactNode}) => {
         </HydrateClient>
 
         
-        
           <div className='mt-2'>
             <CreateWorkSpace />
           </div>
