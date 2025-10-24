@@ -61,8 +61,8 @@ export function WorkspaceHeader() {
   }
 
   // Use the correct property names from KindeOrganization
-  const workspaceName = currentWorkspace.name || currentWorkspace.orgName || 'My Workspace'
-  const workspaceCode = currentWorkspace.code || currentWorkspace.orgCode || ''
+  const workspaceName = currentWorkspace.orgName || currentWorkspace.orgName || 'My Workspace'
+  const workspaceCode = currentWorkspace.orgCode || currentWorkspace.orgCode || ''
 
   return (
     <div className="flex items-center gap-3">
