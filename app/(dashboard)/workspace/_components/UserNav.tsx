@@ -25,6 +25,7 @@ import { LogoutLink, PortalLink,  } from "@kinde-oss/kinde-auth-nextjs/component
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { orpc } from "@/lib/orpc";
 import { getAvatar } from "@/lib/get-avatar";
+import Image from "next/image";
 
 
 interface UserNavProps {
@@ -32,17 +33,10 @@ interface UserNavProps {
 }
 
 export function UserNav({ className }: UserNavProps) {
-    // const user = {
-    //     picture: "https://avatars.githubusercontent.com/u/88566759?v=4",
-    //     given_name: "Jan Marshal",
-    //     email: "jan.marshal@example.com"
-    // };
-
 
     const { 
        data: {user},
     } = useSuspenseQuery(orpc.workspace.list.queryOptions())
-
    
     return (
         <DropdownMenu>
@@ -54,11 +48,19 @@ export function UserNav({ className }: UserNavProps) {
                 >
                     {/* User Avatar */}
                     <Avatar className="h-8 w-8 border-2 border-background shadow-sm">
-                        <AvatarImage
-                            src={getAvatar(user.picture , user.email!)}
-                            alt="User profile picture"
-                            className="object-cover"
-                        />
+
+
+                        <Image
+                        src={getAvatar(user.picture , user.email!)}
+                        alt="User profile picture"
+                        className="object-cover" 
+                        fill  
+                        /> 
+
+                        {/* <AvatarImage
+                            
+                          
+                        /> */}
                         <AvatarFallback className="bg-gradient-to-br from-blue-500 to-purple-600 text-white text-xs font-medium">
                             {user.given_name?.slice(0, 2).toUpperCase()}
                         </AvatarFallback>
