@@ -2,16 +2,18 @@
 import { useEditor, EditorContent } from '@tiptap/react'
 import { editorExtensions } from './extensions'
 import { MenuBar } from './MenuBar'
-import { ReactNode } from 'react'
+import { ReactNode, useEffect } from 'react'
 import React from 'react'
 
 interface iAppProps {
     field: any;
     sendButton: ReactNode;
     footerLeft?: ReactNode;
+    onReset?: () => void; // ✅ Add reset prop
+    isSubmitting?: boolean; // ✅ Add submitting state
 }
 
-export function RichTextEditor({ field, sendButton, footerLeft }: iAppProps) {
+export function RichTextEditor({ field, sendButton, footerLeft, onReset, isSubmitting }: iAppProps) {
     const editor = useEditor({
         immediatelyRender: false,
         extensions: editorExtensions,
@@ -40,6 +42,20 @@ export function RichTextEditor({ field, sendButton, footerLeft }: iAppProps) {
             },
         }
     })
+
+    // ✅ Clear editor when form is reset
+    useEffect(() => {
+        if (editor && field.value === "") {
+            editor.commands.clearContent();
+        }
+    }, [editor, field.value]);
+
+    // ✅ Clear editor when submission completes successfully
+    useEffect(() => {
+        if (editor && !isSubmitting && field.value === "") {
+            editor.commands.clearContent();
+        }
+    }, [editor, isSubmitting, field.value]);
 
     return (
         <div className='relative w-full border border-input rounded-lg overflow-hidden bg-background flex flex-col'>

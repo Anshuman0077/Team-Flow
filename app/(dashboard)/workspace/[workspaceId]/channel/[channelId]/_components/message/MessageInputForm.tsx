@@ -16,9 +16,8 @@ interface MessageInputFormProps {
 }
 
 export const MessageInputForm = ({ channelId }: MessageInputFormProps) => {
-
-  const queryClient = useQueryClient()
-  // ✅ Initialize form
+  const queryClient = useQueryClient();
+  
   const form = useForm<CreateMessageSchema>({
     resolver: zodResolver(createMessageSchema),
     defaultValues: {
@@ -27,21 +26,26 @@ export const MessageInputForm = ({ channelId }: MessageInputFormProps) => {
     },
   });
 
-  // ✅ Create message mutation
   const createMessageMutation = useMutation({
     ...orpc.message.create.mutationOptions(),
-  
     onSuccess: () => {
       queryClient.invalidateQueries({
         queryKey: orpc.message.list.key()
-      })
+      });
       toast.success("Message sent successfully!");
-      form.reset({ channelId, content: "" }); // ✅ reset form after success
+      
+      // Reset form
+      form.reset({
+        channelId: channelId,
+        content: "",
+      });
+
+      // ✅ Dispatch event to trigger scroll to bottom in MessageList
+      window.dispatchEvent(new CustomEvent('newMessageSent'));
     },
     onError: (error: any) => {
       console.error("Frontend message creation error:", error);
 
-      // ✅ Better error handling
       switch (error?.code) {
         case "FORBIDDEN":
           toast.error("You don't have access to this channel.");
@@ -55,7 +59,6 @@ export const MessageInputForm = ({ channelId }: MessageInputFormProps) => {
     },
   });
 
-  // ✅ Submit handler
   const onSubmit = (data: CreateMessageSchema) => {
     const trimmedContent = data.content?.trim();
 
@@ -67,7 +70,6 @@ export const MessageInputForm = ({ channelId }: MessageInputFormProps) => {
     createMessageMutation.mutate({ ...data, content: trimmedContent });
   };
 
-  // ✅ Render form
   return (
     <FormProvider {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="w-full">
