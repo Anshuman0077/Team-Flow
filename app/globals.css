@@ -1,5 +1,7 @@
 @import "tailwindcss";
 @import "tw-animate-css";
+@plugin "@tailwindcss/typography";
+
 
 @custom-variant dark (&:is(.dark *));
 
@@ -118,5 +120,112 @@
   }
   body {
     @apply bg-background text-foreground;
+  }
+}
+
+
+.tiptap p.is-editor-empty:first-child::before {
+  color: hsl(var(--muted-foreground));
+  content: attr(data-placeholder);
+  float: left;
+  height: 0;
+  pointer-events: none;
+}
+
+
+/* Code block styling */
+.tiptap {
+  pre {
+    background: #1a1a1a;
+    border-radius: 0.5rem;
+    color: #fff;
+    font-family: 'JetBrainsMono', monospace;
+    margin: 1.5rem 0;
+    padding: 0.75rem 1rem;
+    position: relative;
+    
+    /* Language label */
+    &::before {
+      color: #999;
+      content: attr(data-language);
+      font-size: 0.8rem;
+      position: absolute;
+      right: 0.75rem;
+      top: 0.5rem;
+    }
+
+    code {
+      background: none;
+      color: inherit;
+      font-size: 0.9rem;
+      padding: 0;
+      
+      /* Highlight.js compatible colors */
+      .hljs-comment,
+      .hljs-quote {
+        color: #616161;
+      }
+
+      .hljs-variable,
+      .hljs-template-variable,
+      .hljs-attribute,
+      .hljs-tag,
+      .hljs-name,
+      .hljs-regexp,
+      .hljs-link,
+      .hljs-name,
+      .hljs-selector-id,
+      .hljs-selector-class {
+        color: #f98181;
+      }
+
+      .hljs-number,
+      .hljs-meta,
+      .hljs-built_in,
+      .hljs-builtin-name,
+      .hljs-literal,
+      .hljs-type,
+      .hljs-params {
+        color: #fbbc88;
+      }
+
+      .hljs-string,
+      .hljs-symbol,
+      .hljs-bullet {
+        color: #b9f18d;
+      }
+
+      .hljs-title,
+      .hljs-section {
+        color: #faf594;
+      }
+
+      .hljs-keyword,
+      .hljs-selector-tag {
+        color: #70cff8;
+      }
+
+      .hljs-emphasis {
+        font-style: italic;
+      }
+
+      .hljs-strong {
+        font-weight: 700;
+      }
+    }
+  }
+
+  /* Inline code styling */
+  code {
+    background-color: var(--muted);
+    border-radius: 0.25rem;
+    color: var(--foreground);
+    font-size: 0.875rem;
+    padding: 0.125rem 0.25rem;
+    
+    &:not(pre code) {
+      background-color: var(--muted);
+      color: var(--foreground);
+    }
   }
 }

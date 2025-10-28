@@ -1,6 +1,7 @@
 
 
 import { createChannel, listChannel } from "./channel"
+import { createMessage, listMessages } from "./message"
 import { createWorkspace, listworkspaces } from "./workspace"
 
 export const router = {
@@ -13,5 +14,10 @@ export const router = {
         create: createChannel,
         list: listChannel,
     },
+
+    message: {
+        create: createMessage,
+        list:   listMessages,
+    }
 
 }

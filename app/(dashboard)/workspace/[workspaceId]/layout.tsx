@@ -26,7 +26,7 @@ const ChannelListLayout = async ({ children, params }: ChannelListLayoutProps) =
     }
 
     return (
-        <div className="flex h-full">
+        <div className="flex h-full w-full">
             {/* Sidebar */}
             <div className='flex h-full w-80 flex-col bg-secondary border-r border-border'>
                 {/* Header */}
@@ -74,6 +74,8 @@ const ChannelListLayout = async ({ children, params }: ChannelListLayoutProps) =
             </div>
             
             {/* Main Content */}
+
+            {children}
             {/* <div className="flex-1 overflow-hidden bg-background">
                 {children}
             </div> */}

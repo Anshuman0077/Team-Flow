@@ -7,19 +7,23 @@ import { cn } from "@/lib/utils"
 import { useQuery } from "@tanstack/react-query";
 import { orpc } from "@/lib/orpc";
 import { AlertCircle } from "lucide-react";
+import { useParams } from "next/navigation";
+import { string } from "zod";
 
 interface Channel {
-  id: string;
-  name: string;
-  workspaceId: string;
-  createdAt: Date;
-  updatedAt: Date;
-  createdById: string;
-  __optimistic?: boolean; // Flag for optimistic updates
+    id: string;
+    name: string;
+    workspaceId: string;
+    createdAt: Date;
+    updatedAt: Date;
+    createdById: string;
+    __optimistic?: boolean; // Flag for optimistic updates
 }
 
 export function ChannelList() {
     const { data, error, isLoading, isFetching } = useQuery(orpc.channel.list.queryOptions());
+
+    const { workspaceId, channelId } = useParams<{ workspaceId: string, channelId: string }>()
 
     // Handle loading state
     if (isLoading) {
@@ -49,11 +53,11 @@ export function ChannelList() {
             <div className="p-2 text-center">
                 <AlertCircle className="size-4 mx-auto text-destructive mb-1" />
                 <p className="text-xs text-destructive">Failed to load channels</p>
-                <button 
-                  className="text-xs text-primary underline mt-1"
-                  onClick={() => window.location.reload()}
+                <button
+                    className="text-xs text-primary underline mt-1"
+                    onClick={() => window.location.reload()}
                 >
-                  Retry
+                    Retry
                 </button>
             </div>
         );
@@ -67,12 +71,7 @@ export function ChannelList() {
 
     return (
         <div className="space-y-0.5 py-1 relative">
-            {/* Refetching indicator */}
-            {/* {showRefetching && (
-                <div className="absolute -top-2 right-2">
-                    <Loader2 className="size-3 animate-spin text-muted-foreground" />
-                </div>
-            )} */}
+
 
             {/* Empty state */}
             {channels.length === 0 && !isLoading && (
@@ -83,29 +82,38 @@ export function ChannelList() {
             )}
 
             {/* Channels list */}
-            {channels.map((channel: Channel) => (
-                <Link  
-                    key={channel.id}
-                    href={`/workspace/${channel.workspaceId}/channel/${channel.id}`}
-                    className={buttonVariants({
-                        variant: "ghost",
-                        className: cn(
-                            "w-full justify-start px-2 py-1 h-7 text-muted-foreground hover:text-accent-foreground hover:bg-accent font-normal relative",
-                            channel.__optimistic && "opacity-60" // Dim optimistic updates
-                        )
-                    })}  
-                >
-                    <Hash className="size-4 mr-2" />
-                    <span className="truncate flex-1">
-                        {channel.name}
-                    </span>
-                    
-                    {/* Loading indicator for optimistic updates */}
-                    {channel.__optimistic && (
-                        <Loader2 className="size-3 animate-spin ml-2" />
-                    )}
-                </Link>
-            ))}
+            {channels.map((channel: Channel) => {
+
+                const isActive = channel.id === channelId;
+
+                return (
+
+                    <Link
+                        key={channel.id}
+                        href={`/workspace/${workspaceId}/channel/${channel.id}`}
+                        className={buttonVariants({
+                            variant: "ghost",
+                            className: cn(
+                                "w-full justify-start px-2 py-1 h-7 text-muted-foreground hover:text-accent-foreground hover:bg-accent font-normal relative",
+                                channel.__optimistic && "opacity-60", 
+                                isActive && "text-accent-foreground bg-accent "
+                            )
+                        })}
+                    >
+                        <Hash className="size-4 mr-2" />
+                        <span className="truncate flex-1">
+                            {channel.name}
+                        </span>
+
+                        {/* Loading indicator for optimistic updates */}
+                        {channel.__optimistic && (
+                            <Loader2 className="size-3 animate-spin ml-2" />
+                        )}
+                    </Link>
+                )
+
+
+            })}
         </div>
     );
 }

@@ -17,6 +17,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { isDefinedError } from "@orpc/client";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Plus } from "lucide-react";
+import { useParams, useRouter } from "next/navigation";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
@@ -25,6 +26,8 @@ import { z } from "zod";
 export function CreateNewChannel() {
   const [open, setOpen] = useState(false);
   const queryClient = useQueryClient();
+  const router = useRouter()
+  const {workspaceId} = useParams<{workspaceId: string}>()
   
   type FormValues = z.infer<typeof ChannelNameSchema>;
 
@@ -108,6 +111,8 @@ export function CreateNewChannel() {
         // Reset form and close dialog
         form.reset();
         setOpen(false);
+
+        router.push(`/workspace/${workspaceId}/channel/${newChannel.id}`)
         
         // The optimistic update already added it, but we want to ensure
         // we have the real data from the server
@@ -136,7 +141,7 @@ export function CreateNewChannel() {
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogTrigger asChild>
-        <Button variant="outline" className="w-full justify-start">
+        <Button variant="outline" className="w-full justify-center">
           <Plus className="size-4 mr-2" />
           Add Channel
         </Button>
