@@ -10,9 +10,10 @@ interface iAppProps {
   onChange: (next: string) => void;
   onSubmit: () => void;
   isSubmitting?: boolean;
+  onReset?: () => void; // ✅ Add reset prop
 }
 
-export const MessageComposer = ({ value, onChange, onSubmit, isSubmitting }: iAppProps) => {
+export const MessageComposer = ({ value, onChange, onSubmit, isSubmitting, onReset }: iAppProps) => {
   return (
     <>
       <RichTextEditor
@@ -39,6 +40,9 @@ export const MessageComposer = ({ value, onChange, onSubmit, isSubmitting }: iAp
             Attach
           </Button>
         }
+        // ✅ Pass reset function to editor
+        onReset={onReset}
+        isSubmitting={isSubmitting}
       />
     </>
   )
