@@ -1,0 +1,48 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+}
+
+model Channel {
+  id          String   @id @default(uuid())
+  name        String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  //Foreign keys ( Kinde Ids )
+  workspaceId String /// Kinde organization Id
+  createdById String //// Kinde user Id
+
+  // Correct relationship: One Channel has many Messages
+  message    Message[]
+
+  @@unique([workspaceId, name])
+}
+
+model Message {
+  id        String   @id @default(uuid())
+  content   String
+  imageUrl  String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Author information
+  authorId      String // Kinde user ID
+  authorEmail   String // User's email
+  authorName    String // Fixed typo: was authorname
+  authorAvatar  String // Avatar URL
+
+  // Correct relationship: Many Messages belong to one Channel
+  // FIXED: Make the relation field optional since channelId is optional
+  channel   Channel? @relation(fields: [channelId], references: [id])
+  channelId String?
+
+  @@index([channelId]) // For better query performance
+}

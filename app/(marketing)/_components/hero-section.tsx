@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import Image from "next/image";
 import { TextEffect } from "@/components/ui/text-effect";
 import { AnimatedGroup } from "@/components/ui/animated-group";
-import { HeroHeader } from "../app/(marketing)/_components/header";
+import { HeroHeader } from "../../../components/header";
 import BackgorundImage from "@/public/backgorund/NightBg.png"
 import HeroDark from "@/public/screenshot/ScreenShot1.png"
 import HeroLight from  "@/public/screenshot/ScreenShot2.png"
