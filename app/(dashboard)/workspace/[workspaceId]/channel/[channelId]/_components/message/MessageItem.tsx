@@ -1,47 +1,70 @@
-import { SafeContent } from '@/components/rich-text-editor/safeContent';
-import { getAvatar } from '@/lib/get-avatar';
-import { Message } from '@prisma/client'
-import Image from 'next/image'
-import React from 'react'
+"use client";
+
+import { SafeContent } from "@/components/rich-text-editor/safeContent";
+import { getAvatar } from "@/lib/get-avatar";
+import { Message } from "@prisma/client";
+import Image from "next/image";
+import React from "react";
 
 interface MessageItemProps {
-    message: Message;
+  message: Message;
 }
 
-export const MessageItem = ({ message}: MessageItemProps) => {
-    return (
-        <div className='flex space-x-3  relative p-3 rounded-lg group hover:bg-muted/50'>
-            <Image
-                src={getAvatar(message.authorAvatar , message.authorEmail)}
-                alt='User Avatar'
-                width={32}
-                height={32}
-                className='size-8 rounded-full ' // Fixed from size-4 to size-8
-            />
+export const MessageItem = ({ message }: MessageItemProps) => {
+  return (
+    <div className="flex items-start gap-3 relative p-3 rounded-lg group transition-all hover:bg-muted/40">
+      {/* Avatar */}
+      <Image
+        src={getAvatar(message.authorAvatar, message.authorEmail)}
+        alt="User Avatar"
+        width={40}
+        height={40}
+        className="size-10 rounded-full object-cover border border-border shadow-sm"
+      />
 
-            <div className='flex-1 space-y-1 min-w-0'>
-                <div className='flex items-center gap-x-2'>
-                    <p className='font-medium text-foreground leading-none'>{message.authorName}</p>
-                    <span className='text-xs text-muted-foreground leading-none'>
-                      {new Intl.DateTimeFormat("en-GB", {
-                        day: "numeric",
-                        month: "short",
-                        year: "numeric"
-                      }).format(message.createdAt)
-                      }
-                      {"  "}
-                      {new Intl.DateTimeFormat("en-GB", {
-                       hour12: true,
-                       hour:"2-digit",
-                       minute:"2-digit",
-                      }).format(message.updatedAt)
-                      }
-                    
-                    </span>
-                </div>
-                {/* <p className='text-sm max-w-none break-words'>{message.content}</p> */}
-                <SafeContent className='text-sm break-words prose dark:prose-invert max-w-none mark:text-primary'  content={JSON.parse(message.content)}  /> 
-            </div>
+      {/* Message Content */}
+      <div className="flex-1 space-y-1 min-w-0">
+        {/* Header */}
+        <div className="flex flex-wrap items-center gap-x-2">
+          <p className="font-medium text-foreground leading-none">
+            {message.authorName}
+          </p>
+          <span className="text-xs text-muted-foreground leading-none">
+            {new Intl.DateTimeFormat("en-GB", {
+              day: "numeric",
+              month: "short",
+              year: "numeric",
+            }).format(message.createdAt)}{" "}
+            •{" "}
+            {new Intl.DateTimeFormat("en-GB", {
+              hour12: true,
+              hour: "2-digit",
+              minute: "2-digit",
+            }).format(message.updatedAt)}
+          </span>
         </div>
-    )
-}
+
+        {/* Message Text */}
+        <SafeContent
+          className="text-sm break-words prose dark:prose-invert max-w-none mark:text-primary"
+          content={JSON.parse(message.content)}
+        />
+
+        {/* Image Attachment */}
+        {message.imageUrl && (
+          <div className="mt-2 grid gap-2  grid-cols-3">
+            <div className="relative overflow-hidden rounded-2xl border border-border bg-black/5 dark:bg-neutral-900 max-w-[250px] max-h-[250px] flex items-center justify-center">
+              <Image
+                src={message.imageUrl}
+                alt="Message Attachment"
+                width={800}
+                height={800}
+                className=" object-cover w-full h-full transition-transform duration-300 hover:scale-[1.03]"
+              />
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
