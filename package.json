@@ -39,9 +39,11 @@
     "@tiptap/pm": "^3.8.0",
     "@tiptap/react": "^3.8.0",
     "@tiptap/starter-kit": "^3.8.0",
+    "@uploadthing/react": "^7.3.3",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "dompurify": "^3.3.0",
+    "framer-motion": "^12.23.24",
     "html-react-parser": "^5.2.7",
     "lowlight": "^3.3.0",
     "lucide-react": "^0.545.0",
@@ -58,6 +60,7 @@
     "tailwind-merge": "^3.3.1",
     "toggle": "^1.0.1",
     "tooltip": "^1.6.1",
+    "uploadthing": "^7.7.4",
     "zod": "^4.1.12"
   },
   "devDependencies": {

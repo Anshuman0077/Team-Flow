@@ -1,15 +1,24 @@
 "use client";
 
-import React from "react";
+import React, { useEffect } from "react";
 import { useForm, FormProvider } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 
-import { createMessageSchema, CreateMessageSchema } from "@/app/(dashboard)/schemas/message";
+import {
+  createMessageSchema,
+  CreateMessageSchema,
+} from "@/app/(dashboard)/schemas/message";
 import { orpc } from "@/lib/orpc";
-import { FormField, FormItem, FormControl, FormMessage } from "@/components/ui/form";
+import {
+  FormField,
+  FormItem,
+  FormControl,
+  FormMessage,
+} from "@/components/ui/form";
 import { MessageComposer } from "./MessageComposer";
+import { useAttachmentUpload } from "@/hooks/use-attatchment";
 
 interface MessageInputFormProps {
   channelId: string;
@@ -17,31 +26,44 @@ interface MessageInputFormProps {
 
 export const MessageInputForm = ({ channelId }: MessageInputFormProps) => {
   const queryClient = useQueryClient();
-  
+  const upload = useAttachmentUpload();
+
   const form = useForm<CreateMessageSchema>({
     resolver: zodResolver(createMessageSchema),
     defaultValues: {
       channelId,
       content: "",
+      imageUrl: undefined,
     },
   });
+
+  // ✅ Keep imageUrl in sync with upload.stageUrl
+  useEffect(() => {
+    if (upload.stageUrl) {
+      form.setValue("imageUrl", upload.stageUrl);
+    } else {
+      form.setValue("imageUrl", undefined);
+    }
+  }, [upload.stageUrl, form]);
 
   const createMessageMutation = useMutation({
     ...orpc.message.create.mutationOptions(),
     onSuccess: () => {
       queryClient.invalidateQueries({
-        queryKey: orpc.message.list.key()
+        queryKey: orpc.message.list.key(),
       });
       toast.success("Message sent successfully!");
-      
-      // Reset form
-      form.reset({
-        channelId: channelId,
-        content: "",
-      });
 
-      // ✅ Dispatch event to trigger scroll to bottom in MessageList
-      window.dispatchEvent(new CustomEvent('newMessageSent'));
+      // Reset form and upload state
+      form.reset({
+        channelId,
+        content: "",
+        imageUrl: undefined,
+      });
+      upload.clear();
+
+      // ✅ Trigger scroll in MessageList
+      window.dispatchEvent(new CustomEvent("newMessageSent"));
     },
     onError: (error: any) => {
       console.error("Frontend message creation error:", error);
@@ -67,7 +89,11 @@ export const MessageInputForm = ({ channelId }: MessageInputFormProps) => {
       return;
     }
 
-    createMessageMutation.mutate({ ...data, content: trimmedContent });
+    createMessageMutation.mutate({
+      ...data,
+      content: trimmedContent,
+      imageUrl: upload.stageUrl || undefined, //  ensure latest URL is sent
+    });
   };
 
   return (
@@ -84,6 +110,7 @@ export const MessageInputForm = ({ channelId }: MessageInputFormProps) => {
                   onChange={field.onChange}
                   onSubmit={form.handleSubmit(onSubmit)}
                   isSubmitting={createMessageMutation.isPending}
+                  upload={upload}
                 />
               </FormControl>
               <FormMessage />
