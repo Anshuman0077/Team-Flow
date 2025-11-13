@@ -3,7 +3,7 @@
 import React, { useEffect } from "react";
 import { useForm, FormProvider } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { InfiniteData, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 
 import {
@@ -19,12 +19,19 @@ import {
 } from "@/components/ui/form";
 import { MessageComposer } from "./MessageComposer";
 import { useAttachmentUpload } from "@/hooks/use-attatchment";
+import { Message } from "@prisma/client";
+import { KindeUser } from "@kinde-oss/kinde-auth-nextjs";
+import { getAvatar } from "@/lib/get-avatar";
 
 interface MessageInputFormProps {
   channelId: string;
+  user: KindeUser<Record<string, unknown>>;
 }
 
-export const MessageInputForm = ({ channelId }: MessageInputFormProps) => {
+type MessagePage = { items: Message[], nextCursor?: string };
+type InfiniteMessages = InfiniteData<MessagePage>;
+
+export const MessageInputForm = ({ channelId , user }: MessageInputFormProps) => {
   const queryClient = useQueryClient();
   const upload = useAttachmentUpload();
 
@@ -47,11 +54,94 @@ export const MessageInputForm = ({ channelId }: MessageInputFormProps) => {
   }, [upload.stageUrl, form]);
 
   const createMessageMutation = useMutation({
-    ...orpc.message.create.mutationOptions(),
-    onSuccess: () => {
-      queryClient.invalidateQueries({
-        queryKey: orpc.message.list.key(),
-      });
+    ...orpc.message.create.mutationOptions({
+      onMutate: async (data) => {
+        await queryClient.cancelQueries({
+          queryKey: ["message.list", channelId],
+        });
+      
+        const previousData = queryClient.getQueriesData<InfiniteMessages>({
+          queryKey: ["message.list", channelId],
+        });
+      
+
+        const tempId = `optimistic-${crypto.randomUUID()}`;
+
+        const optimisticMessage: Message = {
+          id: tempId,
+          content: data.content,
+          imageUrl: data.imageUrl ?? null,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+          authorId: user.id,
+          authorEmail: user.email!,
+          authorName: user.given_name ?? "John Doe",
+          authorAvatar: getAvatar(user.picture , user.email!),
+          channelId: channelId,
+        };
+
+        queryClient.setQueryData<InfiniteMessages>(["message.list", channelId] , (old) => {
+          if (!old) {
+            return {
+              pages: [
+                {
+                  items: [optimisticMessage],
+                  nextCursor: undefined,
+                },
+              ],
+              pageParams: [undefined],
+            } satisfies InfiniteMessages;
+          }
+
+          const firstPage = old.pages[0] ?? {
+            items: [],
+            nextCursor: undefined,
+          };
+
+          const updatedFirstPage: MessagePage = {
+            ...firstPage,
+            items: [optimisticMessage, ...firstPage.items],
+          };
+           
+          return {
+            ...old,
+            pages: [updatedFirstPage, ...old.pages.slice(1)],
+          };
+
+        } 
+      );
+
+      return{
+        previousData,
+        tempId,
+      }
+      },
+
+
+
+
+      
+    }),
+    onSuccess: (data , _variables, context) => {
+      queryClient.setQueryData<InfiniteMessages>(
+        ["message.list", channelId],
+        (old) => {
+          if (!old) return old;
+
+          const updatedPages = old.pages.map((page) => ({
+            ...page,
+            items: page.items.map((m) => m.id === context.tempId
+            ? {
+              ...data,
+            }
+            : m
+          ),
+          }));
+
+          return {...old, pages: updatedPages };
+        }
+      );
+
       toast.success("Message sent successfully!");
 
       // Reset form and upload state
@@ -62,22 +152,24 @@ export const MessageInputForm = ({ channelId }: MessageInputFormProps) => {
       });
       upload.clear();
 
-      // ✅ Trigger scroll in MessageList
-      window.dispatchEvent(new CustomEvent("newMessageSent"));
+      // ✅ IMPROVED: Trigger scroll in MessageList with custom data
+      const event = new CustomEvent("newMessageSent", {
+        detail: { timestamp: Date.now() }
+      });
+      window.dispatchEvent(event);
     },
-    onError: (error: any) => {
-      console.error("Frontend message creation error:", error);
 
-      switch (error?.code) {
-        case "FORBIDDEN":
-          toast.error("You don't have access to this channel.");
-          break;
-        case "BAD_REQUEST":
-          toast.error("Message content cannot be empty.");
-          break;
-        default:
-          toast.error("Failed to send message. Please try again.");
+    onError: (_err, _variables , context) => {
+      console.error("Frontend message creation error:", _err);
+
+      if (context?.previousData) {
+        queryClient.setQueryData(
+          ["message.list", channelId],
+          context.previousData
+        );
       }
+      return toast.error("Something went wrong");
+     
     },
   });
 
@@ -92,7 +184,7 @@ export const MessageInputForm = ({ channelId }: MessageInputFormProps) => {
     createMessageMutation.mutate({
       ...data,
       content: trimmedContent,
-      imageUrl: upload.stageUrl || undefined, //  ensure latest URL is sent
+      imageUrl: upload.stageUrl || undefined,
     });
   };
 

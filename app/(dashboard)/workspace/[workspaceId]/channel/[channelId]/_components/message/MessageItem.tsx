@@ -11,6 +11,15 @@ interface MessageItemProps {
 }
 
 export const MessageItem = ({ message }: MessageItemProps) => {
+  // 🎯 Parse content safely
+  const parseContent = (content: string) => {
+    try {
+      return JSON.parse(content);
+    } catch {
+      return { type: "doc", content: [{ type: "paragraph", content: [{ type: "text", text: content }] }] };
+    }
+  };
+
   return (
     <div className="flex items-start gap-3 relative p-3 rounded-lg group transition-all hover:bg-muted/40">
       {/* Avatar */}
@@ -34,32 +43,34 @@ export const MessageItem = ({ message }: MessageItemProps) => {
               day: "numeric",
               month: "short",
               year: "numeric",
-            }).format(message.createdAt)}{" "}
+            }).format(new Date(message.createdAt))}{" "}
             •{" "}
             {new Intl.DateTimeFormat("en-GB", {
               hour12: true,
               hour: "2-digit",
               minute: "2-digit",
-            }).format(message.updatedAt)}
+            }).format(new Date(message.updatedAt))}
           </span>
         </div>
 
         {/* Message Text */}
         <SafeContent
           className="text-sm break-words prose dark:prose-invert max-w-none mark:text-primary"
-          content={JSON.parse(message.content)}
+          content={parseContent(message.content)}
         />
 
         {/* Image Attachment */}
         {message.imageUrl && (
-          <div className="mt-2 grid gap-2  grid-cols-3">
+          <div className="mt-2">
             <div className="relative overflow-hidden rounded-2xl border border-border bg-black/5 dark:bg-neutral-900 max-w-[250px] max-h-[250px] flex items-center justify-center">
               <Image
                 src={message.imageUrl}
                 alt="Message Attachment"
                 width={800}
                 height={800}
-                className=" object-cover w-full h-full transition-transform duration-300 hover:scale-[1.03]"
+                className="object-cover w-full h-full transition-transform duration-300 hover:scale-[1.03]"
+                priority={false}
+                loading="lazy"
               />
             </div>
           </div>

@@ -20,7 +20,8 @@ const nextConfig: NextConfig = {
         protocol:"https",
       },
     ]
-  }
+  },
+  cacheComponents: true,
   /* config options here */
 };
 
