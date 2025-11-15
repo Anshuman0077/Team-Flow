@@ -7,7 +7,7 @@ import React, {
   useRef,
   useState,
 } from "react";
-import { useInfiniteQuery } from "@tanstack/react-query";
+import { useInfiniteQuery, useSuspenseQuery } from "@tanstack/react-query";
 import { MessageItem } from "./message/MessageItem";
 import { orpc } from "@/lib/orpc";
 import { useParams } from "next/navigation";
@@ -17,6 +17,10 @@ import { Loader2, ChevronsDown } from "lucide-react";
 
 // 🧠 Refined, stable MessageList
 export function MessageList() {
+
+
+
+  const { data: { user } } = useSuspenseQuery(orpc.workspace.list.queryOptions());
   const { channelId } = useParams<{ channelId: string }>();
   const [hasInitialScrolled, setHasInitialScrolled] = useState(false);
   const [showScrollToBottom, setShowScrollToBottom] = useState(false);
@@ -33,7 +37,7 @@ export function MessageList() {
       cursor: pageParam,
       limit: 10,
     }),
-    queryKey: ["message.list", channelId],
+    queryKey: ["message.list", channelId],  // Query keys //
     initialPageParam: undefined,
     getNextPageParam: (lastpage) => lastpage.nextCursor,
     select: (data) => ({
@@ -198,6 +202,10 @@ export function MessageList() {
     setShowScrollToBottom(false);
   };
 
+
+
+ 
+
   return (
     <div className="relative h-full overflow-hidden rounded-xl bg-background/10">
       {/* Elegant top sticky loader */}
@@ -235,7 +243,7 @@ export function MessageList() {
                 exit={{ opacity: 0, scale: 0.98 }}
                 transition={{ duration: 0.18 }}
               >
-                <MessageItem message={message} />
+                <MessageItem message={message} currentUser={user.id} />
               </motion.div>
             ))}
           </AnimatePresence>

@@ -4,13 +4,16 @@ import { SafeContent } from "@/components/rich-text-editor/safeContent";
 import { getAvatar } from "@/lib/get-avatar";
 import { Message } from "@prisma/client";
 import Image from "next/image";
-import React from "react";
+import React, { useState } from "react";
+import { MessageHoverToolBar } from "../toolbar";
+import { EditMessage } from "../toolbar/EditMessage";
 
 interface MessageItemProps {
   message: Message;
+  currentUser:string;
 }
 
-export const MessageItem = ({ message }: MessageItemProps) => {
+export const MessageItem = ({ message , currentUser }: MessageItemProps) => {
   // 🎯 Parse content safely
   const parseContent = (content: string) => {
     try {
@@ -19,6 +22,12 @@ export const MessageItem = ({ message }: MessageItemProps) => {
       return { type: "doc", content: [{ type: "paragraph", content: [{ type: "text", text: content }] }] };
     }
   };
+
+
+  const [isEditing , setIsEditing] = useState(false)
+
+
+
 
   return (
     <div className="flex items-start gap-3 relative p-3 rounded-lg group transition-all hover:bg-muted/40">
@@ -53,12 +62,21 @@ export const MessageItem = ({ message }: MessageItemProps) => {
           </span>
         </div>
 
+
+        {isEditing ? (
+          <EditMessage
+           message={message}
+          onCancel={() => setIsEditing(false)}
+          onSave={() => setIsEditing(false)}
+           />
+
+        ): (
+          <> 
         {/* Message Text */}
         <SafeContent
           className="text-sm break-words prose dark:prose-invert max-w-none mark:text-primary"
           content={parseContent(message.content)}
         />
-
         {/* Image Attachment */}
         {message.imageUrl && (
           <div className="mt-2">
@@ -75,7 +93,16 @@ export const MessageItem = ({ message }: MessageItemProps) => {
             </div>
           </div>
         )}
+        </>
+        )}
+
       </div>
+      <MessageHoverToolBar 
+       messageId={message.id}
+      canEdit={message.authorId === currentUser}
+      onEdit={() => setIsEditing(true)} 
+
+        />
     </div>
   );
 };
