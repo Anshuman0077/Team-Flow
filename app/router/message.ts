@@ -1,14 +1,16 @@
+
 import z from "zod";
 import { standardSecurityMiddleware } from "../middleware/arcjet/standard";
 import { requiredAuthMiddleware } from "../middleware/auth";
 import { base } from "../middleware/base";
 import { requiredWorkspaceMiddleware } from "../middleware/workspace";
 import { prisma } from "@/lib/db";
-import { createMessageSchema } from "../(dashboard)/schemas/message";
+import { createMessageSchema, updateMessageSchema } from "../(dashboard)/schemas/message";
 import { getAvatar } from "@/lib/get-avatar";
 import { Message } from "@prisma/client";
 import { WriteSecurityMiddleware } from "../middleware/arcjet/write";
 import { ReadSecurityMiddleware } from "../middleware/arcjet/read";
+import { heavyWriteSecurityMiddleware } from "../middleware/arcjet/heavy-write";
 
 
 export const createMessage = base
@@ -115,4 +117,54 @@ export const listMessages = base
     });
 
 
+
+    export const updateMessage = base
+    .use(requiredAuthMiddleware)
+    .use(requiredWorkspaceMiddleware)
+    .use(standardSecurityMiddleware)
+    .use(WriteSecurityMiddleware)
+    .route({
+      method: "PUT",
+      path: "/messages/:messageId",
+      summary: "you can update your messages",
+      tags: ["Messages"],
+    })
+    .input(updateMessageSchema)
+    .output(
+      z.object({
+        message: z.custom<Message>(),
+        canEdit: z.boolean(),
+      })
+    )
+    .handler(async ({ context, input, errors }) => {
+      const message = await prisma.message.findFirst({
+        where: {
+          id: input.messageId,
+          channel: { // ✅ lowercase
+            workspaceId: context.workspace.orgCode,
+          },
+        },
+        select: {
+          id: true,
+          authorAvatar: true,
+          authorId: true, // ✅ required for permission check
+        },
+      });
+  
+      if (!message) throw errors.NOT_FOUND();
+  
+      if (message.authorId !== context.user.id) throw errors.FORBIDDEN();
+  
+      const updated = await prisma.message.update({
+        where: { id: input.messageId },
+        data: { content: input.content },
+      });
+  
+      return {
+        message: updated, // ✅ correct spelling
+        canEdit: updated.authorId === context.user.id,
+      };
+    });
+
+      
     

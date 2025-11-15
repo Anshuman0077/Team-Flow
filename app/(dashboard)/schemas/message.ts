@@ -1,3 +1,4 @@
+
 import z from "zod";
 
 export const createMessageSchema = z.object({
@@ -6,5 +7,12 @@ export const createMessageSchema = z.object({
     imageUrl: z.url().optional(),
 });
 
+
+export const updateMessageSchema = z.object({
+    messageId: z.string(),
+    content: z.string(),
+})
 // Export the inferred TypeScript type
 export type CreateMessageSchema = z.infer<typeof createMessageSchema>;
+
+export type UpdateMessageSchemaType = z.infer<typeof updateMessageSchema>;
