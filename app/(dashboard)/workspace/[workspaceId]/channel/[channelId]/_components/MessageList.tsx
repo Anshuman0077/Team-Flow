@@ -17,9 +17,6 @@ import { Loader2, ChevronsDown } from "lucide-react";
 
 // 🧠 Refined, stable MessageList
 export function MessageList() {
-
-
-
   const { data: { user } } = useSuspenseQuery(orpc.workspace.list.queryOptions());
   const { channelId } = useParams<{ channelId: string }>();
   const [hasInitialScrolled, setHasInitialScrolled] = useState(false);
@@ -37,7 +34,7 @@ export function MessageList() {
       cursor: pageParam,
       limit: 10,
     }),
-    queryKey: ["message.list", channelId],  // Query keys //
+    queryKey: ["message.list", channelId],
     initialPageParam: undefined,
     getNextPageParam: (lastpage) => lastpage.nextCursor,
     select: (data) => ({
@@ -137,7 +134,7 @@ export function MessageList() {
     }
   }, [hasNextPage, isFetchingNextPage, fetchNextPage]);
 
-  //  Optional IntersectionObserver backup
+  // Optional IntersectionObserver backup
   useEffect(() => {
     if (!scrollRef.current || !hasNextPage) return;
     const container = scrollRef.current;
@@ -177,7 +174,7 @@ export function MessageList() {
     );
   }
 
-  //  Empty state
+  // Empty state
   if (!isLoading && items.length === 0) {
     return (
       <div className="flex h-full w-full items-center justify-center p-8">
@@ -202,12 +199,8 @@ export function MessageList() {
     setShowScrollToBottom(false);
   };
 
-
-
- 
-
   return (
-    <div className="relative h-full overflow-hidden rounded-xl bg-background/10">
+    <div className="relative h-full w-full overflow-hidden bg-background">
       {/* Elegant top sticky loader */}
       {isFetchingNextPage && (
         <motion.div
@@ -228,7 +221,7 @@ export function MessageList() {
       <div
         ref={scrollRef}
         onScroll={handleScroll}
-        className="h-full overflow-y-auto px-4 pb-6 scroll-smooth"
+        className="h-full w-full overflow-y-auto px-4 pb-6 scroll-smooth"
       >
         <div className="flex flex-col gap-2 min-h-full justify-end">
           <AnimatePresence initial={false}>
@@ -264,11 +257,6 @@ export function MessageList() {
             className="absolute bottom-5 right-5 z-40 flex items-center gap-2 bg-primary text-primary-foreground rounded-full p-2.5 shadow-lg hover:scale-[1.03] transition-transform"
           >
             <ChevronsDown className="size-4" />
-            {unreadCount > 0 && (
-              <span className="ml-1 inline-flex items-center justify-center min-w-[20px] h-5 rounded-full bg-primary-foreground/20 text-xs font-medium">
-                {unreadCount}
-              </span>
-            )}
           </motion.button>
         )}
       </AnimatePresence>
