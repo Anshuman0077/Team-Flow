@@ -10,7 +10,7 @@ import { getAvatar } from "@/lib/get-avatar";
 import { Message } from "@prisma/client";
 import { WriteSecurityMiddleware } from "../middleware/arcjet/write";
 import { ReadSecurityMiddleware } from "../middleware/arcjet/read";
-import { heavyWriteSecurityMiddleware } from "../middleware/arcjet/heavy-write";
+import { MessageListItem } from "@/lib/types";
 
 
 export const createMessage = base
@@ -43,6 +43,22 @@ export const createMessage = base
             throw errors.FORBIDDEN();
           }
 
+
+          if (input.threadId) {
+            const parentMessage = await prisma.message.findFirst({
+              where: {
+                id: input.threadId,
+                channel: {
+                  workspaceId: context.workspace.orgCode,
+                },
+              },
+            });
+
+            if (!parentMessage || parentMessage.channelId !== input.channelId || parentMessage.threadsId !== null) {
+              throw errors.BAD_REQUEST()
+            }
+          }
+
         const created = await prisma.message.create({
             data:{
                 content: input.content,
@@ -52,6 +68,7 @@ export const createMessage = base
                 authorEmail: context.user.email!,
                 authorName: context.user.given_name ?? "John Doe",
                 authorAvatar: getAvatar(context.user.picture , context.user.email!),
+                threadsId: input.threadId,
             }
         })
 
@@ -77,7 +94,7 @@ export const listMessages = base
         cursor: z.string().optional(),
     }))
     .output(z.object({
-        items: z.array(z.custom<Message>()),
+        items: z.array(z.custom<MessageListItem>()),
         nextCursor: z.string().optional(),
     }))
     .handler(async ({context ,  input , errors}) => {
@@ -85,6 +102,7 @@ export const listMessages = base
             where :{
                 id: input.channelId,
                 workspaceId: context.workspace.orgCode,
+
             },
         })
 
@@ -98,6 +116,7 @@ export const listMessages = base
         const messages = await prisma.message.findMany({
             where:{
                 channelId: input.channelId,
+                threadsId: null,
             },
             ...(input.cursor
                 ? {
@@ -106,12 +125,33 @@ export const listMessages = base
                 } : {}),
                 take: limit,
                 orderBy: [{createdAt: "desc"} , {id: "desc"}],
+                include: {
+                  _count: {select: {replies: true}}
+                }
+
+
+
         });
+
+        const items: MessageListItem[] = messages.map((m) => ({
+          id: m.id,
+          content: m.content,
+          imageUrl: m.imageUrl,
+          createdAt: m.createdAt,
+          updatedAt: m.updatedAt,
+          authorAvatar: m.authorAvatar,
+          authorEmail: m.authorEmail,
+          authorId: m.authorId,
+          authorName: m.authorName,
+          channelId: m.channelId,
+          threadsId: m.threadsId,
+          repliesCount: m._count.replies,
+        }))
 
         const nextCursor = messages.length === limit ? messages[messages.length - 1].id : undefined;
 
         return {
-            items: messages,
+            items: items,
             nextCursor,
         };
     });
@@ -166,5 +206,53 @@ export const listMessages = base
       };
     });
 
-      
-    
+
+    export const listThreadReplies = base
+    .use(requiredAuthMiddleware)
+    .use(requiredWorkspaceMiddleware)
+    .use(standardSecurityMiddleware)
+    .use(ReadSecurityMiddleware)
+    .route({
+      method: "GET",
+      path: "/messages/:messageId/thread",
+      summary: "List replies in a thread",
+      tags: ["Messages"],
+    })
+    .input(z.object({ messageId: z.string() }))
+    .output(
+      z.object({
+        parent: z.custom<Message>(),
+        messages: z.array(z.custom<Message>()),
+      })
+    )
+    .handler(async ({ input, context, errors }) => {
+  
+      // ✔️ FIX 1: Fetch correct parent
+      const parent = await prisma.message.findFirst({
+        where: {
+          id: input.messageId,
+          channel: { workspaceId: context.workspace.orgCode },
+        },
+      });
+  
+      if (!parent) throw errors.NOT_FOUND();
+  
+      // ✔️ FIX 2: Validate parent is not itself a reply
+      if (parent.threadsId !== null) {
+        throw errors.BAD_REQUEST();
+      }
+  
+      // ✔️ FIX 3: Fetch replies with workspace validation
+      const replies = await prisma.message.findMany({
+        where: {
+          threadsId: input.messageId,
+          channel: { workspaceId: context.workspace.orgCode },
+        },
+        orderBy: [
+          { createdAt: "asc" },
+          { id: "asc" },
+        ],
+      });
+  
+      return { parent, messages: replies };
+    });

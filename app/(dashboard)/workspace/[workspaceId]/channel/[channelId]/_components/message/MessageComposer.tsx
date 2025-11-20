@@ -15,6 +15,7 @@ interface iAppProps {
   isSubmitting?: boolean;
   onReset?: () => void;
   upload: useAttachmentUploadType;
+  disabled?: boolean;
 }
 
 export const MessageComposer = ({ value, onChange, onSubmit, isSubmitting, onReset, upload }: iAppProps) => {
