@@ -3,8 +3,8 @@ generator client {
 }
 
 datasource db {
-  provider  = "postgresql"
-  url       = env("DATABASE_URL")
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
 }
 
 model Channel {
@@ -12,35 +12,44 @@ model Channel {
   name        String
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
-
   workspaceId String
   createdById String
-
   messages    Message[]
 
   @@unique([workspaceId, name])
 }
 
 model Message {
-  id          String   @id @default(uuid())
-  content     String
-  imageUrl    String?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-
-  authorId      String
-  authorEmail   String
-  authorName    String
-  authorAvatar  String
-
-  channel     Channel? @relation(fields: [channelId], references: [id])
-  channelId   String?
+  id              String            @id @default(uuid())
+  content         String
+  imageUrl        String?
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+  authorId        String
+  authorEmail     String
+  authorName      String
+  authorAvatar    String
+  channelId       String?
+  threadsId       String?
+  channel         Channel?          @relation(fields: [channelId], references: [id])
+  parentMessage   Message?          @relation("MessageThread", fields: [threadsId], references: [id], onDelete: Cascade)
+  replies         Message[]         @relation("MessageThread")
+  MessageReaction MessageReaction[]
 
   @@index([channelId])
+}
 
-  // 🟢 Correct Thread Relation
-  parentMessage Message? @relation("MessageThread", fields: [threadsId], references: [id], onDelete: Cascade)
-  threadsId     String?
+model MessageReaction {
+  id         String   @id @default(uuid())
+  emoji      String
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  userId     String
+  userEmail  String
+  userName   String
+  userAvatar String?
+  messageId  String
+  message    Message  @relation(fields: [messageId], references: [id], onDelete: Cascade)
 
-  replies       Message[] @relation("MessageThread")
+  @@unique([messageId, userId, emoji])
 }

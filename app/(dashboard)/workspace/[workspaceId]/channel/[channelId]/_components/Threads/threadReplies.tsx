@@ -1,13 +1,16 @@
 import Image from "next/image";
 import { motion } from "framer-motion";
-import { Message } from "@prisma/client";
+
 import { SafeContent } from "@/components/rich-text-editor/safeContent";
+import { ReactionsBar } from "../reactions/ReactionsBar";
+import { MessageListItem } from "@/lib/types";
 
 interface ThreadRepliesProps {
-  message: Message;
+  message: MessageListItem;
+  selectedThreadId: string;
 }
 
-export function ThreadReplies({ message }: ThreadRepliesProps) {
+export function ThreadReplies({ message , selectedThreadId }: ThreadRepliesProps) {
   return (
     <motion.div
       initial={{ opacity: 0, y: 6 }}
@@ -70,14 +73,11 @@ export function ThreadReplies({ message }: ThreadRepliesProps) {
         </div>
 
         {/* Message bubble */}
-
         <SafeContent  className=" mt-1 text-sm leading-6 break-words 
             backdrop-blur-sm 
             rounded-lg 
             shadow-sm
-            transition-all prose dark:prose-invert max-w-none" content={JSON.parse(message.content)}  />
-
-           
+            transition-all prose dark:prose-invert max-w-none" content={JSON.parse(message.content)}  />           
               {message.imageUrl && (
                 <div className="mt-2 px-3">
                   <Image  
@@ -90,7 +90,9 @@ export function ThreadReplies({ message }: ThreadRepliesProps) {
                 </div>
               )}
 
-         
+
+              
+            <ReactionsBar context={{type: "thread", threadId: selectedThreadId}} reactions={message.reactions} messageId={message.id}/>
       </div>
     </motion.div>
   );
