@@ -180,7 +180,7 @@ export function ThreadSideBar({ user }: ThreadSidebarProps) {
                 {/* Parent Message */}
                 <div className="p-4 flex gap-x-3 bg-muted/10 backdrop-blur-md border-b">
                   <Image
-                    src={data.parent.authorAvatar}
+                    src={data.parentRow.authorAvatar}
                     width={48}
                     height={48}
                     alt=""
@@ -190,7 +190,7 @@ export function ThreadSideBar({ user }: ThreadSidebarProps) {
                   <div className="flex-1">
                     <div className="flex justify-between">
                       <span className="font-semibold text-sm">
-                        {data.parent.authorName}
+                        {data.parentRow.authorName}
                       </span>
 
                       <span className="text-[11px] text-muted-foreground">
@@ -200,16 +200,16 @@ export function ThreadSideBar({ user }: ThreadSidebarProps) {
                           hour12: true,
                           month: "short",
                           day: "numeric",
-                        }).format(new Date(data.parent.createdAt))}
+                        }).format(new Date(data.parentRow.createdAt))}
                       </span>
                     </div>
 
                     <SafeContent
                       className="prose dark:prose-invert text-sm leading-6 break-words bg-background/40 backdrop-blur-sm"
                       content={
-                        typeof data.parent.content === "string"
-                          ? JSON.parse(data.parent.content)
-                          : data.parent.content
+                        typeof data.parentRow.content === "string"
+                          ? JSON.parse(data.parentRow.content)
+                          : data.parentRow.content
                       }
                     />
                   </div>
@@ -223,7 +223,7 @@ export function ThreadSideBar({ user }: ThreadSidebarProps) {
 
                   <div className="space-y-1 px-2">
                     {data.messages.map((msg) => (
-                      <ThreadReplies key={msg.id} message={msg} />
+                      <ThreadReplies key={msg.id} message={msg} selectedThreadId={selectedThreadId} />
                     ))}
                   </div>
 

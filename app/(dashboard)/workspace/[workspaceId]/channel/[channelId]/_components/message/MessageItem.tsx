@@ -12,11 +12,9 @@ import { useThread } from "@/provider/ThreadProvider";
 import { useQueryClient } from "@tanstack/react-query";
 import { orpc } from "@/lib/orpc";
 import type { MessageListItem } from "@/lib/types";
+import { ReactionsBar } from "../reactions/ReactionsBar";
 
 /**
- * MessageItem (optimized)
- *
- * - Option B: fully enhanced + optimized
  * - Prefetch: debounced, cached-check, only when repliesCount > 0
  * - Prevents unnecessary re-renders via memo
  */
@@ -172,6 +170,13 @@ export const MessageItem = React.memo(function MessageItemInner({
                 </div>
               </div>
             )}
+            
+            {/* Reactions  */}
+            <ReactionsBar 
+            reactions={message.reactions}
+            messageId={message.id} 
+            context={{type: "list", channelId: message.channelId!}}
+            />
 
             {/* thread button */}
             {message.repliesCount > 0 && (

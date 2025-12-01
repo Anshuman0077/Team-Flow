@@ -20,7 +20,6 @@ import { InfiniteData,  useMutation, useQueryClient } from "@tanstack/react-quer
 import { orpc } from "@/lib/orpc";
 import { toast } from "sonner";
 import { KindeUser } from "@kinde-oss/kinde-auth-nextjs";
-import { Message } from "@prisma/client";
 import { getAvatar } from "@/lib/get-avatar";
 import { MessageListItem } from "@/lib/types";
 
@@ -74,7 +73,7 @@ const queryClient = useQueryClient()
         await queryClient.cancelQueries({queryKey: listOptions.queryKey})
 
         const previous = queryClient.getQueryData(listOptions.queryKey)
-        const optimistic: Message = {
+        const optimistic: MessageListItem = {
           id: `optimistic:${crypto.randomUUID()}`,
           content: data.content,
           createdAt: new Date(),
@@ -85,7 +84,9 @@ const queryClient = useQueryClient()
           authorAvatar: getAvatar(user.picture , user.email!),
           channelId: data.channelId,
           threadsId: data.threadId!,
-          imageUrl: data.imageUrl ?? null
+          imageUrl: data.imageUrl ?? null,
+          reactions: [],
+          repliesCount: 0,
         };
 
         queryClient.setQueryData(listOptions.queryKey , (old) => {
