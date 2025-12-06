@@ -1,6 +1,6 @@
 
 import { KindeUser } from '@kinde-oss/kinde-auth-nextjs';
-import arcjet, { detectBot, shield } from "@/lib/arcjet"
+import arcjet, { detectBot, sensitiveInfo, shield } from "@/lib/arcjet"
 import { base } from "../base";
 
 
@@ -20,6 +20,12 @@ const buildStandartAj = () =>
             ],
         })
     )
+    .withRule(
+        sensitiveInfo({
+            mode: "LIVE",
+            deny: ["PHONE_NUMBER", "CREDIT_CARD_NUMBER"]
+        })
+    );
 
 
 
@@ -48,6 +54,11 @@ export const standardSecurityMiddleware = base
             throw errors.FORBIDDEN({
                 message: "Request blocked by security policy (WAF)"
             })
+        }
+        if (decision.reason.isSensitiveInfo()) {
+            throw errors.BAD_REQUEST({
+                message: "Senstive information detected. Please remove PII ( e.g., credit cards , phone numbers).   "
+            });
         }
 
         errors.FORBIDDEN({

@@ -8,141 +8,155 @@ import { cn } from "@/lib/utils";
 import { useParams } from "next/navigation";
 import { MessageListItem } from "@/lib/types";
 
-
-type ThreadContext = {type: "thread" , threadId: string}
-type ListContext = {type: "list", channelId: string}
+type ThreadContext = { type: "thread"; threadId: string };
+type ListContext = { type: "list"; channelId: string };
 
 type MessagePage = {
-  items: MessageListItem[],
+  items: MessageListItem[];
   nextCursor?: string;
-}
+};
 
 type InfiniteReplies = InfiniteData<MessagePage>;
 
-
-interface  ReactionsBarProps {
-  messageId: string
-  reactions: GroupReactionsSchemaType[];
-  context: ThreadContext | ListContext; 
+interface ReactionsBarProps {
+  messageId: string;
+  reactions?: GroupReactionsSchemaType[]; // optional upstream, we will default
+  context: ThreadContext | ListContext;
 }
 
-export function ReactionsBar({messageId, reactions, context}: ReactionsBarProps) {
-  
-  const {channelId} = useParams<{channelId: string}>();
+export function ReactionsBar({
+  messageId,
+  reactions = [], // default to empty array — prevents runtime .map on undefined
+  context,
+}: ReactionsBarProps) {
+  const { channelId } = useParams<{ channelId: string }>();
   const queryClient = useQueryClient();
 
   const toggleMutation = useMutation(
     orpc.message.reaction.toggle.mutationOptions({
+      onMutate: async (vars: { messageId: string; emoji: string }) => {
+        // defensive bump: accepts undefined and treats it as []
+        const bump = (rxns?: GroupReactionsSchemaType[]) => {
+          const arr = rxns ?? [];
+          const found = arr.find((r) => r.emoji === vars.emoji);
 
-      onMutate: async (vars: {messageId: string, emoji: string}) => {
-        const bump = (rxns: GroupReactionsSchemaType[]) => {
-        const found = rxns.find((r) => r.emoji === vars.emoji)
+          if (found) {
+            const dec = found.count - 1;
+            if (dec <= 0) {
+              return arr.filter((r) => r.emoji !== found.emoji);
+            }
+            return arr.map((r) =>
+              r.emoji === found.emoji
+                ? { ...r, count: dec, reactedByMe: false }
+                : r
+            );
+          }
 
-        if (found) {
-          const dec = found.count - 1
+          return [
+            ...arr,
+            { emoji: vars.emoji, count: 1, reactedByMe: true },
+          ];
+        };
 
-          return dec <= 0 ? rxns.filter((r) => r.emoji !== found.emoji) : rxns.map((r) => r.emoji === found.emoji ? {...r , count: dec , reactedByMe: false } : r)
-        }
-        return [...rxns , { emoji: vars.emoji, count: 1 , reactedByMe: true }]
-        }
-
-        const isThread = context && context.type === "thread"
+        // THREAD optimistic update (if inside a thread view)
+        const isThread = context && context.type === "thread";
         if (isThread) {
           const listOptions = orpc.message.thread.list.queryOptions({
-            input: {
-              messageId: context.threadId,
-            }
-          })
-          await queryClient.cancelQueries({queryKey: listOptions.queryKey});
-          const prevThread = queryClient.getQueryData(listOptions.queryKey)
+            input: { messageId: context.threadId },
+          });
 
-          queryClient.setQueryData(listOptions.queryKey, 
-            (old) => {
-              
-              if (!old) return old;
+          await queryClient.cancelQueries({ queryKey: listOptions.queryKey });
+          const prevThread = queryClient.getQueryData(listOptions.queryKey);
 
-              if (vars.messageId === context.threadId) {
-                return {
-                   ...old,
-                   parentRow: {
-                    ...old.parentRow,
-                    reactions: bump(old.parentRow.reactions)
-                   }
-                }
-              }
+          queryClient.setQueryData(listOptions.queryKey, (old: any) => {
+            if (!old) return old;
+
+            // if toggled on the parent message (thread root)
+            if (vars.messageId === context.threadId) {
               return {
                 ...old,
-                messages: old.messages.map((m) => m.id === vars.messageId ? {...m, reactions: bump(m.reactions)}: m)
-              }
-
+                parentRow: {
+                  ...old.parentRow,
+                  // defend against undefined
+                  reactions: bump(old.parentRow.reactions ?? []),
+                },
+              };
             }
-          );
+
+            return {
+              ...old,
+              messages: old.messages.map((m: any) =>
+                m.id === vars.messageId
+                  ? { ...m, reactions: bump(m.reactions ?? []) }
+                  : m
+              ),
+            };
+          });
 
           return {
             prevThread,
             threadQueryKey: listOptions.queryKey,
-          }
+          };
         }
 
-        const listkey =  ["message.list", channelId];
-        await queryClient.cancelQueries({queryKey: listkey});
-        const previous = queryClient.getQueryData(listkey);
+        // LIST optimistic update
+        const listKey = ["message.list", channelId];
+        await queryClient.cancelQueries({ queryKey: listKey });
+        const previous = queryClient.getQueryData(listKey);
 
+        queryClient.setQueryData<InfiniteReplies>(listKey, (old) => {
+          if (!old) return old;
 
-        queryClient.setQueryData<InfiniteReplies>(
-          listkey,
-          (old) => {
-            if (!old) return old;
+          const pages = old.pages.map((page) => ({
+            ...page,
+            items: page.items.map((m) => {
+              if (m.id !== messageId) return m;
 
-            const pages = old.pages.map((page) => ({
-              ...page,
-              items: page.items.map((m) => {
-                if (m.id !== messageId) return m;
-              const current = m.reactions
-
+              // defend against undefined before bump
               return {
                 ...m,
-                reactions: bump(current),
-              }
-             
-              })
-            }))
-             return {
-              ...old,
-              pages,
+                reactions: bump(m.reactions ?? []),
+              };
+            }),
+          }));
 
-             }
-
-          });
           return {
-            previous,
-            listkey,
-          }
+            ...old,
+            pages,
+          };
+        });
+
+        return {
+          previous,
+          listKey,
+        };
       },
+
       onSuccess: () => {
-        return toast.success("Emoji Added successfully")
+        return toast.success("Emoji Added successfully");
       },
-      onError: (_err , _vars , ctx) => {
+
+      onError: (_err, _vars, ctx) => {
+        // restore thread state if provided
         if (ctx?.threadQueryKey && ctx.prevThread) {
-          queryClient.setQueryData(ctx.threadQueryKey , ctx.prevThread)
+          queryClient.setQueryData(ctx.threadQueryKey, ctx.prevThread);
         }
-        if (ctx?.previous && ctx.listkey) {
-          queryClient.setQueryData(ctx.listkey, ctx.previous);
+        // restore list state if provided
+        if (ctx?.listKey && ctx.previous) {
+          queryClient.setQueryData(ctx.listKey, ctx.previous);
         }
-        return toast.error("Emoji added failed!!")
-      }
+        return toast.error("Emoji added failed!!");
+      },
     })
-  )
+  );
 
   const handleToggle = (emoji: string) => {
+    toggleMutation.mutate({ emoji, messageId });
+  };
 
-    toggleMutation.mutate({emoji, messageId})
-    // console.log(emoji);
-    
-  }
   return (
-    <div className=" flex items-center gap-2 mt-2 px-1">
-      {/* Render each reaction button */}
+    <div className="flex items-center gap-2 mt-2 px-1">
+      {/* safe map over reactions array (defaults to []) */}
       {reactions.map((r) => (
         <button
           key={r.emoji}
@@ -160,10 +174,8 @@ export function ReactionsBar({messageId, reactions, context}: ReactionsBarProps)
           <span className="font-medium">{r.count}</span>
         </button>
       ))}
-      <EmojiReaction onSelect={handleToggle} />
 
-      {/* Example future UI — reactions display */}
-      {/* <span className="px-2 py-1 text-xs bg-muted rounded-full">👍 12</span> */}
+      <EmojiReaction onSelect={handleToggle} />
     </div>
   );
 }

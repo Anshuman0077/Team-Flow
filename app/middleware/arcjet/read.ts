@@ -1,6 +1,6 @@
 
 import { KindeUser } from '@kinde-oss/kinde-auth-nextjs';
-import arcjet, { detectBot, shield, slidingWindow } from "@/lib/arcjet"
+import arcjet, { detectBot, sensitiveInfo, shield, slidingWindow } from "@/lib/arcjet"
 import { base } from "../base";
 
 
@@ -13,6 +13,12 @@ const buildStandartAj = () =>
         max: 180,
     })
   )
+  .withRule(
+    sensitiveInfo({
+        mode: "LIVE",
+        deny: ["PHONE_NUMBER", "CREDIT_CARD_NUMBER"]
+    })
+);
 
 
 
@@ -31,6 +37,11 @@ export const ReadSecurityMiddleware = base
         if (decision.reason.isRateLimit()) {
             throw errors.RATE_LIMITED({
                 message: "Too many changes impact please slow down."
+            });
+        }
+        if (decision.reason.isSensitiveInfo()) {
+            throw errors.BAD_REQUEST({
+                message: "Senstive information detected. Please remove PII ( e.g., credit cards , phone numbers).   "
             });
         }
 
