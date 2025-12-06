@@ -13,6 +13,7 @@ import { SafeContent } from "@/components/rich-text-editor/safeContent";
 import { KindeUser } from "@kinde-oss/kinde-auth-nextjs";
 import { ThreadSidebareSkeleton } from "./threadSidebareSkeleton";
 import { useEffect, useRef, useState } from "react";
+import { SummaizeeThread } from "./SummarizeThread";
 
 interface ThreadSidebarProps {
   user: KindeUser<Record<string, unknown>>;
@@ -161,9 +162,12 @@ export function ThreadSideBar({ user }: ThreadSidebarProps) {
               <MessageSquare className="w-4 h-4 text-primary" />
               <span className="text-sm font-semibold">Thread</span>
             </div>
+            <div className="flex items-center gap-2">
+            <SummaizeeThread messageId={selectedThreadId!} />
             <Button variant="ghost" size="icon" onClick={closeThread}>
               <X className="w-4 h-4" />
             </Button>
+            </div>
           </div>
 
           {/* BODY: scrollRef SHOULD wrap all messages */}
