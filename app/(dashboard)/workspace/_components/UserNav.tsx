@@ -20,7 +20,7 @@ import {
     HelpCircle,
     ChevronDown
 } from "lucide-react";
-import { cn } from "@/lib/utils";
+
 import { LogoutLink, PortalLink,  } from "@kinde-oss/kinde-auth-nextjs/components";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { orpc } from "@/lib/orpc";
