@@ -38,23 +38,22 @@ export const listworkspaces = base
     )
     .handler(async ({input , context ,errors}) => {
 
-        const { getUserOrganizations} = getKindeServerSession();
-
-        const orginations = await getUserOrganizations()
-
-        if (!orginations) {
-            throw errors.FORBIDDEN()
+        const { getUserOrganizations } = getKindeServerSession();
+        const organizations = await getUserOrganizations();
+      
+        if (!organizations) {
+          throw errors.FORBIDDEN();
         }
-        
+      
         return {
-            workspaces: orginations?.orgs.map((org) => ({
-                id: org.code,
-                name: org.name ?? "My Workspace",
-                avatar: org.name?.charAt(0) ?? "M",
-            })),
-            user: context.user,
-            currentWorkspace: context.workspace,
-        }
+          workspaces: organizations.orgs.map((org) => ({
+            id: org.code,
+            name: org.name ?? "My Workspace",
+            avatar: org.name?.charAt(0) ?? "M",
+          })),
+          user: context.user,
+          currentWorkspace: context.workspace,
+        };
 
         
 })
