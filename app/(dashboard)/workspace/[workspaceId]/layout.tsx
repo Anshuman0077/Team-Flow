@@ -4,9 +4,9 @@ import { CreateNewChannel } from './_components/CreateNewChannel'
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible'
 import { ChevronDown } from 'lucide-react'
 import { ChannelList } from './_components/ChannelList'
-import { WorkspaceMembersList } from './_components/WorkspaceMembersList'
 import { getQueryClient, HydrateClient } from '@/lib/query/hydration'
 import { orpc } from '@/lib/orpc'
+import { WorkspaceMembersList } from './_components/WorkspaceMembersList'
 
 interface ChannelListLayoutProps {
     children: ReactNode

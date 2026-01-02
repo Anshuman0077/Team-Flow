@@ -1,101 +1,121 @@
 "use client";
 
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
+import { User } from '@/app/(dashboard)/schemas/realtime';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { usePresence } from '@/hooks/use-presence';
 import { getAvatar } from '@/lib/get-avatar';
 import { orpc } from '@/lib/orpc';
-import { cn } from '@/lib/utils'
-import { useSuspenseQuery } from '@tanstack/react-query';
-import { Crown } from 'lucide-react'
-import React from 'react'
+import { cn } from '@/lib/utils';
+import { useQuery, useSuspenseQuery } from '@tanstack/react-query';
+import { useParams } from 'next/navigation';
+import React, { useMemo } from 'react';
 
 export const WorkspaceMembersList = () => {
-  // const getStatusColor = (status: string) => {
-  //   switch (status) {
-  //     case 'online': return 'bg-green-500'
-  //     case 'offline': return 'bg-gray-400'
-  //     case 'idle': return 'bg-yellow-500'
-  //     default: return 'bg-gray-400'
-  //   } 
-  // }
+  const {
+    data: { members },
+  } = useSuspenseQuery(orpc.channel.list.queryOptions());
 
+  const { data: workspaceData } = useQuery(
+    orpc.workspace.list.queryOptions()
+  );
 
+  const params = useParams();
+  const workspaceId = params.workspaceId;
 
-  const { 
-    data:{members},
-  } = useSuspenseQuery(orpc.channel.list.queryOptions())
+  const currentUser = useMemo(() => {
+    if (!workspaceData?.user) return null;
 
+    return {
+      id: workspaceData.user.id,
+      full_name: workspaceData.user.given_name,
+      email: workspaceData.user.email,
+      picture: workspaceData.user.picture,
+    } satisfies User;
+  }, [workspaceData?.user]);
+
+  const { onlineUsers } = usePresence({
+    room: `workspace-${workspaceId}`,
+    currentUser,
+  });
+
+  const onlineUserIds = useMemo( () => new Set(onlineUsers.map((u) => u.id)), [onlineUsers] );
 
   return (
-    <div className="space-y-2 py-1">
-      {/* Members Header */}
-      {/* <div className="px-3">
-        <div className="flex items-center justify-between">
-          <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
-            Members — {Members.length}
-          </span>
-        </div>
-      </div> */}
+    <div className="space-y-1 py-2">
+      {members.map((member) => {
+        // const isOnline = onlineUserIds.has(member.id);
 
-      {/* Members List */}
-      <div className="space-y-1">
-        {members.map((member) => (
-          <div 
-            key={member.id} 
+        return (
+          <div
+            key={member.id}
             className={cn(
-              "group flex items-center gap-3 px-3 py-2 rounded-lg",
-              "hover:bg-accent cursor-pointer transition-all duration-200"
+              "group flex items-center gap-3 rounded-xl px-3 py-2.5",
+              "transition-all duration-200",
+              "hover:bg-accent/60 hover:shadow-sm"
             )}
           >
-            {/* Avatar with status */}
-            <div className="relative flex-shrink-0">
-              <Avatar className="size-8">
-                <AvatarImage 
-                  // src={member.picture} 
-                  src={getAvatar(member.picture ?? null, member.email!)}
-                  alt="User Picture"
+            {/* Avatar + Status */}
+            <div className="relative">
+              {/* Status ring */}
+              <div
+                className={cn(
+                  "absolute -inset-0.5 rounded-full",
+                  member.id && onlineUserIds.has(member.id)
+                    ? "bg-green-500/30 animate-pulse"
+                    : "bg-transparent"
+                )}
+              />
+
+              <Avatar className="relative z-10 size-9 border border-border">
+                <AvatarImage
+                  src={getAvatar(
+                    member.picture ?? null,
+                    member.email ?? "" // ✅ FIXED HERE
+                  )}
+                  alt={member.full_name ?? "User"}
                   className="object-cover"
                 />
-                <AvatarFallback className="bg-primary/10 text-primary font-medium">
-                  {member.full_name?.split(' ').map(n => n[0]).join('').toUpperCase()}
+                <AvatarFallback className="bg-primary/10 text-primary font-semibold text-xs">
+                  {member.full_name
+                    ?.split(" ")
+                    .map((n) => n[0])
+                    .join("")
+                    .toUpperCase()}
                 </AvatarFallback>
               </Avatar>
-              
-              {/* Status indicator */}
-              {/* <div 
+
+              {/* Online dot */}
+              <span
                 className={cn(
-                  "absolute -bottom-0.5 -right-0.5 size-3 rounded-full border-2 border-background",
-                  getStatusColor(member.status)
+                  "absolute bottom-0 right-0 z-20 size-2.5 rounded-full border-2 border-background",
+                  member.id && onlineUserIds.has(member.id) ? "bg-green-500" : "bg-muted-foreground/40"
                 )}
-              /> */}
+              />
             </div>
 
-            {/* Member info - Clean layout */}
+            {/* User info */}
             <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-2">
-                <p className="text-sm font-medium truncate text-foreground">
-                  {member.full_name}
-                </p>
-                {/* {member.role === 'admin' && (
-                  <Crown className="size-3 text-yellow-500 fill-yellow-500 flex-shrink-0" />
-                )} */}
-              </div>
-              <p className="text-xs text-muted-foreground truncate">
-                {member.email}
+              <p className="truncate text-sm font-medium text-foreground leading-tight">
+                {member.full_name}
+              </p>
+              <p className="truncate text-xs text-muted-foreground">
+                {member.email ?? "No email"}
               </p>
             </div>
 
-            {/* Status badge */}
-            {/* <div className={cn(
-              "text-xs px-2 py-1 rounded-full font-medium flex-shrink-0",
-              member.status === 'online' && "text-green-700 bg-green-100",
-              member.status === 'offline' && "text-gray-700 bg-gray-100",
-              member.status === 'idle' && "text-yellow-700 bg-yellow-100"
-            )}>
-              {member.status === 'online' ? 'Online' : member.status === 'idle' ? 'Idle' : 'Offline'}
-            </div> */}
+            {/* Status label */}
+            <div
+              className={cn(
+                "text-[10px] font-medium uppercase tracking-wide",
+                "opacity-0 group-hover:opacity-100 transition-opacity",
+                member.id && onlineUserIds.has(member.id) ? "text-green-500" : "text-muted-foreground"
+              )}
+            >
+              { member.id && onlineUserIds.has(member.id) ? "Online" : "Offline"}
+            </div>
           </div>
-        ))}
-      </div>
+        );
+      })}
     </div>
-  )
-}
+  );
+};
