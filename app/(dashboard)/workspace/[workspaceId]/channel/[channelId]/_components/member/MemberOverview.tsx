@@ -2,14 +2,18 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Search, Users } from "lucide-react";
-import { useState } from "react";
+import { use, useMemo, useState } from "react";
 import { motion } from "framer-motion";
 import { useQuery } from "@tanstack/react-query";
 import { orpc } from "@/lib/orpc";
 import { MemberItems } from "./MemberItems";
 import { Skeleton } from "@/components/ui/skeleton";
+import { usePresence } from "@/hooks/use-presence";
+import { useParams } from "next/navigation";
+import { User } from "@/app/(dashboard)/schemas/realtime";
 
 export function MemberOverview() {
+  const params = useParams()
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState("");
 
@@ -18,17 +22,50 @@ export function MemberOverview() {
   const members = data ?? [];
   const query = search.trim().toLowerCase();
 
+
   if (error) {
     return <h1>Error: {error.message}</h1>
   }
 
-  const filteredMembers = query
-    ? members.filter((m) => {
-        const name = m.full_name?.toLowerCase();
-        const email = m.email?.toLowerCase();
-        return name?.includes(query) || email?.includes(query);
-      })
-    : members;
+  const filteredMembers = useMemo(() => {
+    const q = search.trim().toLowerCase();
+  
+    const filtered = q
+      ? members.filter((m) => {
+          const name = m.full_name?.toLowerCase() ?? "";
+          const email = m.email?.toLowerCase() ?? "";
+          return name.includes(q) || email.includes(q);
+        })
+      : members;
+  
+    const admins = filtered.filter((m) => m.roles?.includes("admin"));
+    const users = filtered.filter((m) => !m.roles?.includes("admin"));
+  
+    return [...admins, ...users];
+  }, [members, search]);
+
+    const { data: workspaceData } = useQuery(
+      orpc.workspace.list.queryOptions()
+    );
+
+
+    const workspaceId = params.workspaceId;
+    const currentUser = useMemo(() => {
+      if (!workspaceData?.user) return null;
+  
+      return {
+        id: workspaceData.user.id,
+        full_name: workspaceData.user.given_name,
+        email: workspaceData.user.email,
+        picture: workspaceData.user.picture,
+      } satisfies User;
+    }, [workspaceData?.user]);
+
+    const { onlineUsers } = usePresence({
+      room: `workspace-${workspaceId}`,
+      currentUser,
+    });
+    const onlineUserIds = useMemo( () => new Set(onlineUsers.map((u) => u.id)), [onlineUsers] );
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
@@ -102,7 +139,7 @@ export function MemberOverview() {
             ) : filteredMembers?.length ? (
               <div className="flex flex-col gap-1 p-2">
                 {filteredMembers.map((member) => (
-                  <MemberItems member={member} key={member.id} />
+                  <MemberItems member={member} key={member.id} isOnline={member.id ? onlineUserIds.has(member.id) : false} />
                 ))}
               </div>
             ) : (

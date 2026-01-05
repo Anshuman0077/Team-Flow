@@ -22,6 +22,7 @@ import { useAttachmentUpload } from "@/hooks/use-attatchment";
 import { Message } from "@prisma/client";
 import { KindeUser } from "@kinde-oss/kinde-auth-nextjs";
 import { getAvatar } from "@/lib/get-avatar";
+import { useChannelRealtime } from "@/provider/ChannelRealtimeProvider";
 
 interface MessageInputFormProps {
   channelId: string;
@@ -34,6 +35,7 @@ type InfiniteMessages = InfiniteData<MessagePage>;
 export const MessageInputForm = ({ channelId , user }: MessageInputFormProps) => {
   const queryClient = useQueryClient();
   const upload = useAttachmentUpload();
+  const {send} = useChannelRealtime()
 
   const form = useForm<CreateMessageSchema>({
     resolver: zodResolver(createMessageSchema),
@@ -116,11 +118,6 @@ export const MessageInputForm = ({ channelId , user }: MessageInputFormProps) =>
         tempId,
       }
       },
-
-
-
-
-      
     }),
     onSuccess: (data , _variables, context) => {
       queryClient.setQueryData<InfiniteMessages>(
@@ -151,6 +148,8 @@ export const MessageInputForm = ({ channelId , user }: MessageInputFormProps) =>
         imageUrl: undefined,
       });
       upload.clear();
+
+      send({type: "message:created", payload: {message: data}})
 
       // ✅ IMPROVED: Trigger scroll in MessageList with custom data
       const event = new CustomEvent("newMessageSent", {
