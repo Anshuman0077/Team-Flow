@@ -11,6 +11,7 @@ import { KindeUser } from "@kinde-oss/kinde-auth-nextjs";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ThreadSideBar } from "./_components/Threads/threadSidebare";
 import { ThreadProvider, useThread } from "@/provider/ThreadProvider";
+import { ChannelRealtimeProvider } from "@/provider/ChannelRealtimeProvider";
 
 const ChannelMainPage = () => {
   const { channelId } = useParams<{ channelId: string }>();
@@ -25,7 +26,8 @@ const ChannelMainPage = () => {
   if (error) return <p>Error loading channel</p>;
 
   return (
-    <div className="h-screen w-full flex bg-background">
+    <ChannelRealtimeProvider channelId={channelId}>
+      <div className="h-screen w-full flex bg-background">
       {/* ---------- MAIN TWO-COLUMN LAYOUT ---------- */}
       <div className="flex flex-1 min-h-0 w-full overflow-hidden">
         {/* LEFT COLUMN - Channel Header + Messages */}
@@ -69,6 +71,7 @@ const ChannelMainPage = () => {
 
       </div>
     </div>
+    </ChannelRealtimeProvider>
   );
 };
 
@@ -82,4 +85,4 @@ const ThisIsTheChannelPage = () => {
   )
 }
 
-export default  ThisIsTheChannelPage;
+export default  ThisIsTheChannelPage; 

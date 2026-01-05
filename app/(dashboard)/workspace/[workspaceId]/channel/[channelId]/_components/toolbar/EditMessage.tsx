@@ -14,6 +14,7 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { orpc } from "@/lib/orpc";
+import { useChannelRealtime } from "@/provider/ChannelRealtimeProvider";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Message } from "@prisma/client";
 import { InfiniteData, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -37,6 +38,7 @@ export const EditMessage = memo(function EditMessage({
   // -----------------------------
   // 📝 Setup form
   // -----------------------------
+  const { send } = useChannelRealtime()
   const form = useForm<UpdateMessageSchemaType>({
     resolver: zodResolver(updateMessageSchema),
     defaultValues: {
@@ -74,8 +76,11 @@ export const EditMessage = memo(function EditMessage({
             };
           }
         );
-
         toast.success("Message updated successfully");
+        send({
+          type: "message:updated",
+          payload: {message: updated.message}
+         })
         onSave();
       },
 

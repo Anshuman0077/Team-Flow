@@ -15,13 +15,14 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useParams } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { MessageComposer } from "../message/MessageComposer";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { InfiniteData,  useMutation, useQueryClient } from "@tanstack/react-query";
 import { orpc } from "@/lib/orpc";
 import { toast } from "sonner";
 import { KindeUser } from "@kinde-oss/kinde-auth-nextjs";
 import { getAvatar } from "@/lib/get-avatar";
 import { MessageListItem } from "@/lib/types";
+import { useChannelRealtime } from "@/provider/ChannelRealtimeProvider";
 
 interface ThreadReplyFormProps {
   threadId: string;
@@ -32,6 +33,8 @@ export const ThreadReplyForm = ({ threadId , user}: ThreadReplyFormProps) => {
   const { channelId } = useParams<{ channelId: string }>();
   const upload = useAttachmentUpload();
 const queryClient = useQueryClient()
+const {send } = useChannelRealtime()
+const [editorkey , setEditorKey] = useState(0)
   const form = useForm<CreateMessageSchema>({
     resolver: zodResolver(createMessageSchema),
     defaultValues: {
@@ -41,16 +44,11 @@ const queryClient = useQueryClient()
     },
   });
 
-  console.log(threadId);
+  // console.log(threadId);
   
   // ✔️ IMPORTANT FIX: update threadId when switching threads
   useEffect(() => {
     form.setValue("threadId", threadId);
-    form.reset({
-      content: "",
-      channelId,
-      threadId,
-    });
   }, [threadId]);
 
   const createMessageMutation = useMutation(
@@ -98,7 +96,6 @@ const queryClient = useQueryClient()
         });
 
         //// optimistaclly bump rpliesCount in main message list for the parent message
-
         queryClient.setQueryData<InfiniteMessages>(
           ["message.list", channelId],
           (old) => {
@@ -132,6 +129,13 @@ const queryClient = useQueryClient()
           channelId,
           threadId,
         });
+        setEditorKey((k) => k + 1);
+    
+
+        send({
+          type: "message:replies:increment",
+          payload: {messageId: threadId, delta: 1}
+        })
         toast.success("Reply added");
       },
       onError: (_err, _vars, ctx) => {
@@ -170,6 +174,7 @@ const queryClient = useQueryClient()
             <FormItem>
               <FormControl>
                 <MessageComposer
+                  key={editorkey} // ✅ FIXED
                   value={field.value}
                   onChange={field.onChange}
                   upload={upload}
