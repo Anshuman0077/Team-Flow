@@ -20,7 +20,7 @@ type InfiniteMessage = InfiniteData<MessageListPage>
 export function ChannelRealtimeProvider({channelId , children}: ChannelRealtimeProviderProps) {
     const queryClient = useQueryClient()
     const socket = usePartySocket({
-        host:"http://127.0.0.1:8787",
+        host:"https://teamflow-chat-realtime-yt.itzluciferaloneboy.workers.dev",
         room:`channel-${channelId}`,
         party: "chat",
         onMessage(e) {

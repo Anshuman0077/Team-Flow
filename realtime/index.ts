@@ -1,6 +1,6 @@
 // index.ts
 
-import { ChannelEventSchema, PresenceMessageSchema, UserSchema } from "@/app/(dashboard)/schemas/realtime";
+import { ChannelEventSchema, PresenceMessageSchema, ThreadEventsSchema, UserSchema } from "@/app/(dashboard)/schemas/realtime";
 import { log } from "node:console";
 import { Connection, routePartykitRequest, Server } from "partyserver";
 import z from "zod";
@@ -63,6 +63,16 @@ export class Chat extends Server {
         if (channelEvents.success) {
           const payload = JSON.stringify(channelEvents.data);
           this.broadcast(payload, [connection.id]);
+          return;
+        }
+        
+        // Thread events
+        const threadEvent = ThreadEventsSchema.safeParse(parsed)
+        if (threadEvent.success) {
+          const payload =  JSON.stringify(threadEvent.data)
+
+          this.broadcast(payload, [connection.id])
+
           return;
         }
     } catch (error) {
