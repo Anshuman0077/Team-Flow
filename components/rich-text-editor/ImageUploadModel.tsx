@@ -9,7 +9,7 @@ import {
   DialogDescription,
 } from "../ui/dialog";
 import { toast } from "sonner";
-import { ImageIcon, Upload, Loader2 } from "lucide-react";
+import { Loader2 } from "lucide-react";
 
 interface ImageUploadModelProps {
   open: boolean;

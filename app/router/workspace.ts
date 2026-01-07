@@ -1,6 +1,5 @@
 import { KindeOrganization, KindeUser } from "@kinde-oss/kinde-auth-nextjs";
 import { getKindeServerSession } from "@kinde-oss/kinde-auth-nextjs/server";
-import {os } from "@orpc/server"
 import {z} from "zod"
 
 import { base } from "../middleware/base";
@@ -36,7 +35,7 @@ export const listworkspaces = base
             currentWorkspace: z.custom<KindeOrganization<unknown>>(),
         })
     )
-    .handler(async ({input , context ,errors}) => {
+    .handler(async ({context ,errors}) => {
 
         const { getUserOrganizations } = getKindeServerSession();
         const organizations = await getUserOrganizations();

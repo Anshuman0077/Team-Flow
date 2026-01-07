@@ -12,13 +12,9 @@ import {
     DropdownMenuTrigger 
 } from "@/components/ui/dropdown-menu";
 import { 
-    Settings, 
     User, 
     CreditCard, 
-    Bell, 
     LogOut, 
-    HelpCircle,
-    ChevronDown
 } from "lucide-react";
 
 import { LogoutLink, PortalLink,  } from "@kinde-oss/kinde-auth-nextjs/components";
@@ -57,9 +53,7 @@ export function UserNav({ className }: UserNavProps) {
                         fill  
                         /> 
 
-                        {/* <AvatarImage
-                            
-                          
+                        {/* <AvatarImage                   
                         /> */}
                         <AvatarFallback className="bg-gradient-to-br from-blue-500 to-purple-600 text-white text-xs font-medium">
                             {user.given_name?.slice(0, 2).toUpperCase()}

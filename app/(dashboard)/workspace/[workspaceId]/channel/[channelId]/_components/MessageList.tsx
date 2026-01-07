@@ -50,7 +50,6 @@ export function MessageList() {
     isFetchingNextPage,
     isLoading,
     isError,
-    isFetching,
   } = useInfiniteQuery({
     ...infiniteOptions,
     staleTime: 30_000,

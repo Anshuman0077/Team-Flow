@@ -23,274 +23,228 @@ interface ThreadSidebarProps {
 export function ThreadSideBar({ user }: ThreadSidebarProps) {
   const { selectedThreadId, closeThread } = useThread();
 
-  if (!selectedThreadId) return null;
-
-  // scroll container & anchor
+  // 🔹 REFS (always called)
   const scrollRef = useRef<HTMLDivElement | null>(null);
   const bottomRef = useRef<HTMLDivElement | null>(null);
-
-  // reply form measurement for button placement
   const replyFormRef = useRef<HTMLDivElement | null>(null);
-  const [buttonBottomPx, setButtonBottomPx] = useState<number>(88); // default
-
-  // message count tracking and bottom state
   const lastMessageCountRef = useRef(0);
+
+  // 🔹 STATE
+  const [buttonBottomPx, setButtonBottomPx] = useState(88);
   const [isAtBottom, setIsAtBottom] = useState(true);
 
+  // 🔹 QUERY (always called, condition handled by enabled)
   const { data, isLoading } = useQuery(
     orpc.message.thread.list.queryOptions({
-      input: { messageId: selectedThreadId! },
+      input: { messageId: selectedThreadId as string },
       enabled: Boolean(selectedThreadId),
     })
   );
 
   const messageCount = data?.messages.length ?? 0;
 
-  // --- Helper: are we near the bottom of scroll container? ---
+  // 🔹 Helpers
   const isNearBottom = (el?: HTMLDivElement | null) => {
     const container = el ?? scrollRef.current;
     if (!container) return true;
     return (
-      container.scrollHeight - container.scrollTop - container.clientHeight <=
-      60
+      container.scrollHeight - container.scrollTop - container.clientHeight <= 60
     );
   };
 
-  // --- Scroll handler ---
   const handleScroll = () => {
     setIsAtBottom(isNearBottom());
   };
 
-  // --- Auto-scroll when new messages arrive (only if user is at bottom) ---
+  // 🔹 Auto-scroll on new messages
   useEffect(() => {
+    if (!selectedThreadId) return;
+
     const el = scrollRef.current;
     if (!el) return;
 
-    const prevCount = lastMessageCountRef.current;
+    const prev = lastMessageCountRef.current;
 
-    if (prevCount !== 0 && messageCount > prevCount) {
-      if (isNearBottom(el)) {
-        requestAnimationFrame(() => {
-          bottomRef.current?.scrollIntoView({
-            behavior: "smooth",
-            block: "end",
-          });
-        });
-        setIsAtBottom(true);
-      }
+    if (prev !== 0 && messageCount > prev && isNearBottom(el)) {
+      requestAnimationFrame(() => {
+        bottomRef.current?.scrollIntoView({ behavior: "smooth" });
+      });
+      setIsAtBottom(true);
     }
 
     lastMessageCountRef.current = messageCount;
-  }, [messageCount]);
+  }, [messageCount, selectedThreadId]);
 
-  // --- Keep pinned to bottom when images/load/resize change (if user was at bottom) ---
+  // 🔹 Keep pinned on resize / image load
   useEffect(() => {
+    if (!selectedThreadId) return;
+
     const el = scrollRef.current;
     if (!el) return;
 
-    const scrollToBottomIfNeeded = () => {
+    const scrollIfNeeded = () => {
       if (isAtBottom) {
         requestAnimationFrame(() =>
-          bottomRef.current?.scrollIntoView({
-            behavior: "smooth",
-            block: "end",
-          })
+          bottomRef.current?.scrollIntoView({ behavior: "smooth" })
         );
       }
     };
 
-    const resizeObs = new ResizeObserver(scrollToBottomIfNeeded);
-    resizeObs.observe(el);
+    const ro = new ResizeObserver(scrollIfNeeded);
+    ro.observe(el);
 
-    const mutationObs = new MutationObserver(scrollToBottomIfNeeded);
-    mutationObs.observe(el, { childList: true, subtree: true });
+    const mo = new MutationObserver(scrollIfNeeded);
+    mo.observe(el, { childList: true, subtree: true });
 
-    // image load bubbling: listen on container for load events (capturing)
-    const onLoad = (ev: Event) => {
-      if ((ev.target as HTMLElement).tagName === "IMG") {
-        scrollToBottomIfNeeded();
+    const onLoad = (e: Event) => {
+      if ((e.target as HTMLElement).tagName === "IMG") {
+        scrollIfNeeded();
       }
     };
+
     el.addEventListener("load", onLoad, true);
 
     return () => {
-      resizeObs.disconnect();
-      mutationObs.disconnect();
+      ro.disconnect();
+      mo.disconnect();
       el.removeEventListener("load", onLoad, true);
     };
-  }, [isAtBottom]);
+  }, [isAtBottom, selectedThreadId]);
 
-  // --- Compute floating button bottom offset based on reply form height ---
+  // 🔹 Measure reply form height
   useEffect(() => {
+    if (!selectedThreadId) return;
+
     const update = () => {
-      const formHeight = replyFormRef.current?.offsetHeight ?? 64;
-      const safeGap = 12; // gap above reply form
-      setButtonBottomPx(formHeight + safeGap);
+      const h = replyFormRef.current?.offsetHeight ?? 64;
+      setButtonBottomPx(h + 12);
     };
 
     update();
 
-    // observe size changes of reply form
-    const formEl = replyFormRef.current;
-    if (!formEl) {
-      // keep a window resize fallback
+    const el = replyFormRef.current;
+    if (!el) {
       window.addEventListener("resize", update);
       return () => window.removeEventListener("resize", update);
     }
 
     const ro = new ResizeObserver(update);
-    ro.observe(formEl);
-
+    ro.observe(el);
     window.addEventListener("resize", update);
 
     return () => {
       ro.disconnect();
       window.removeEventListener("resize", update);
     };
-  }, [replyFormRef.current]);
+  }, [selectedThreadId]);
 
-  // --- Scroll to bottom action (exposed to button) ---
   const scrollToBottom = (smooth = true) => {
-    if (!scrollRef.current) return;
     bottomRef.current?.scrollIntoView({
       behavior: smooth ? "smooth" : "auto",
-      block: "end",
     });
     setIsAtBottom(true);
   };
 
+  // 🔹 SAFE early render
+  if (!selectedThreadId) return null;
+
   return (
-    <ThreadRealtimeProvider threadId={selectedThreadId!}>
+    <ThreadRealtimeProvider threadId={selectedThreadId}>
       <AnimatePresence>
-        {selectedThreadId && (
-          <motion.div
-            initial={{ x: 300, opacity: 0 }}
-            animate={{ x: 0, opacity: 1 }}
-            exit={{ x: 300, opacity: 0 }}
-            transition={{ type: "spring", stiffness: 120, damping: 20 }}
-            className="w-[30rem] h-full flex flex-col bg-background/70 backdrop-blur-xl border-l shadow-xl relative"
+        <motion.div
+          initial={{ x: 300, opacity: 0 }}
+          animate={{ x: 0, opacity: 1 }}
+          exit={{ x: 300, opacity: 0 }}
+          transition={{ type: "spring", stiffness: 120, damping: 20 }}
+          className="w-[30rem] h-full flex flex-col bg-background/70 backdrop-blur-xl border-l shadow-xl relative"
+        >
+          {/* HEADER */}
+          <div className="h-14 flex items-center justify-between px-4 border-b">
+            <div className="flex items-center gap-2">
+              <MessageSquare className="w-4 h-4 text-primary" />
+              <span className="text-sm font-semibold">Thread</span>
+            </div>
+            <div className="flex gap-2">
+              <SummaizeeThread messageId={selectedThreadId} />
+              <Button variant="ghost" size="icon" onClick={closeThread}>
+                <X className="w-4 h-4" />
+              </Button>
+            </div>
+          </div>
+
+          {/* BODY */}
+          <div
+            ref={scrollRef}
+            onScroll={handleScroll}
+            className="flex-1 overflow-y-auto"
           >
-            {/* HEADER */}
-            <div className="h-14 flex items-center justify-between px-4 border-b bg-muted/40">
-              <div className="flex items-center gap-2">
-                <MessageSquare className="w-4 h-4 text-primary" />
-                <span className="text-sm font-semibold">Thread</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <SummaizeeThread messageId={selectedThreadId!} />
-                <Button variant="ghost" size="icon" onClick={closeThread}>
-                  <X className="w-4 h-4" />
-                </Button>
-              </div>
-            </div>
+            {isLoading && <ThreadSidebareSkeleton />}
 
-            {/* BODY: scrollRef SHOULD wrap all messages */}
-            <div
-              ref={scrollRef}
-              onScroll={handleScroll}
-              className="flex-1 overflow-y-auto smooth-scroll"
-              aria-label="thread-scroll"
-            >
-              {isLoading && <ThreadSidebareSkeleton />}
+            {data && (
+              <>
+                {/* Parent */}
+                <div className="p-4 flex gap-3 border-b">
+                  <Image
+                    src={data.parentRow.authorAvatar}
+                    width={48}
+                    height={48}
+                    alt=""
+                    className="rounded-full"
+                  />
 
-              {data && (
-                <>
-                  {/* Parent Message */}
-                  <div className="p-4 flex gap-x-3 bg-muted/10 backdrop-blur-md border-b">
-                    <Image
-                      src={data.parentRow.authorAvatar}
-                      width={48}
-                      height={48}
-                      alt=""
-                      className="rounded-full border border-white/10 shadow-sm"
+                  <div className="flex-1">
+                    <div className="flex justify-between">
+                      <span className="font-semibold text-sm">
+                        {data.parentRow.authorName}
+                      </span>
+                      <span className="text-xs text-muted-foreground">
+                        {new Intl.DateTimeFormat("en-IN", {
+                          hour: "numeric",
+                          minute: "numeric",
+                        }).format(new Date(data.parentRow.createdAt))}
+                      </span>
+                    </div>
+
+                    <SafeContent
+                      className="prose dark:prose-invert"
+                      content={
+                        typeof data.parentRow.content === "string"
+                          ? JSON.parse(data.parentRow.content)
+                          : data.parentRow.content
+                      }
                     />
-
-                    <div className="flex-1">
-                      <div className="flex justify-between">
-                        <span className="font-semibold text-sm">
-                          {data.parentRow.authorName}
-                        </span>
-
-                        <span className="text-[11px] text-muted-foreground">
-                          {new Intl.DateTimeFormat("en-IN", {
-                            hour: "numeric",
-                            minute: "numeric",
-                            hour12: true,
-                            month: "short",
-                            day: "numeric",
-                          }).format(new Date(data.parentRow.createdAt))}
-                        </span>
-                      </div>
-
-                      <SafeContent
-                        className="prose dark:prose-invert text-sm leading-6 break-words bg-background/40 backdrop-blur-sm"
-                        content={
-                          typeof data.parentRow.content === "string"
-                            ? JSON.parse(data.parentRow.content)
-                            : data.parentRow.content
-                        }
-                      />
-                    </div>
                   </div>
+                </div>
 
-                  {/* Replies */}
-                  <div className="py-3">
-                    <p className="text-xs text-muted-foreground ml-4 mb-2">
-                      {data.messages.length} replies
-                    </p>
-
-                    <div className="space-y-1 px-2">
-                      {data.messages.map((msg) => (
-                        <ThreadReplies
-                          key={msg.id}
-                          message={msg}
-                          selectedThreadId={selectedThreadId}
-                        />
-                      ))}
-                    </div>
-
-                    {/* Scroll Anchor */}
-                    <div ref={bottomRef} />
-                  </div>
-                </>
-              )}
-            </div>
-
-            {/* Floating Scroll-to-Bottom Button: positioned above the reply form using measured px */}
-            {!isAtBottom && (
-              <button
-                onClick={() => scrollToBottom(true)}
-                aria-label="scroll-to-bottom"
-                style={{ bottom: `${buttonBottomPx}px` }}
-                className="
-                absolute
-                right-6
-                z-50
-                bg-primary
-                text-primary-foreground
-                p-3
-                rounded-full
-                shadow-lg
-                hover:scale-105
-                transition
-                flex
-                items-center
-                justify-center
-              "
-              >
-                <ChevronsDown className="size-3" />
-              </button>
+                {/* Replies */}
+                <div className="py-3 px-2">
+                  {data.messages.map((msg) => (
+                    <ThreadReplies
+                      key={msg.id}
+                      message={msg}
+                      selectedThreadId={selectedThreadId}
+                    />
+                  ))}
+                  <div ref={bottomRef} />
+                </div>
+              </>
             )}
+          </div>
 
-            {/* Reply Form (measured) */}
-            <div
-              ref={replyFormRef}
-              className="border-t p-2 bg-background/80 backdrop-blur-lg"
+          {!isAtBottom && (
+            <button
+              onClick={() => scrollToBottom()}
+              style={{ bottom: `${buttonBottomPx}px` }}
+              className="absolute right-6 z-50 bg-primary p-3 rounded-full"
             >
-              <ThreadReplyForm user={user} threadId={selectedThreadId} />
-            </div>
-          </motion.div>
-        )}
+              <ChevronsDown className="size-3" />
+            </button>
+          )}
+
+          <div ref={replyFormRef} className="border-t p-2">
+            <ThreadReplyForm user={user} threadId={selectedThreadId} />
+          </div>
+        </motion.div>
       </AnimatePresence>
     </ThreadRealtimeProvider>
   );

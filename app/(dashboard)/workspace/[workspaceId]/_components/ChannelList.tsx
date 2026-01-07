@@ -8,7 +8,6 @@ import { useQuery } from "@tanstack/react-query";
 import { orpc } from "@/lib/orpc";
 import { AlertCircle } from "lucide-react";
 import { useParams } from "next/navigation";
-import { string } from "zod";
 
 interface Channel {
     id: string;
@@ -67,7 +66,7 @@ export function ChannelList() {
     const channels = data?.channels || [];
 
     // Show loading indicator when refetching in background
-    const showRefetching = isFetching && !isLoading && channels.length > 0;
+    // const showRefetching = isFetching && !isLoading && channels.length > 0;
 
     return (
         <div className="space-y-0.5 py-1 relative">

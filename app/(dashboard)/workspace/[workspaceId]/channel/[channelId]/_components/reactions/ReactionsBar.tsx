@@ -8,7 +8,7 @@ import { cn } from "@/lib/utils";
 import { useParams } from "next/navigation";
 import { MessageListItem } from "@/lib/types";
 import { useChannelRealtime } from "@/provider/ChannelRealtimeProvider";
-import { useOptionalThreadRealTime, useThreadRealtime } from "@/provider/ThreadRealtimeProvider";
+import { useOptionalThreadRealTime} from "@/provider/ThreadRealtimeProvider";
 
 type ThreadContext = { type: "thread"; threadId: string };
 type ListContext = { type: "list"; channelId: string };

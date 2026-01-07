@@ -2,7 +2,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Search, Users } from "lucide-react";
-import { use, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { motion } from "framer-motion";
 import { useQuery } from "@tanstack/react-query";
 import { orpc } from "@/lib/orpc";
@@ -13,23 +13,27 @@ import { useParams } from "next/navigation";
 import { User } from "@/app/(dashboard)/schemas/realtime";
 
 export function MemberOverview() {
-  const params = useParams()
+  const params = useParams();
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState("");
 
-  const { data, isLoading, error } = useQuery(orpc.workspace.member.list.queryOptions());
+  // 🔹 Queries (ALWAYS on top)
+  const {
+    data: membersData,
+    isLoading,
+    error,
+  } = useQuery(orpc.workspace.member.list.queryOptions());
 
-  const members = data ?? [];
-  const query = search.trim().toLowerCase();
+  const { data: workspaceData } = useQuery(
+    orpc.workspace.list.queryOptions()
+  );
 
-
-  if (error) {
-    return <h1>Error: {error.message}</h1>
-  }
+  // 🔹 Derived data
+  const members = membersData ?? [];
 
   const filteredMembers = useMemo(() => {
     const q = search.trim().toLowerCase();
-  
+
     const filtered = q
       ? members.filter((m) => {
           const name = m.full_name?.toLowerCase() ?? "";
@@ -37,35 +41,38 @@ export function MemberOverview() {
           return name.includes(q) || email.includes(q);
         })
       : members;
-  
+
     const admins = filtered.filter((m) => m.roles?.includes("admin"));
     const users = filtered.filter((m) => !m.roles?.includes("admin"));
-  
+
     return [...admins, ...users];
   }, [members, search]);
 
-    const { data: workspaceData } = useQuery(
-      orpc.workspace.list.queryOptions()
-    );
+  const currentUser = useMemo(() => {
+    if (!workspaceData?.user) return null;
 
+    return {
+      id: workspaceData.user.id,
+      full_name: workspaceData.user.given_name,
+      email: workspaceData.user.email,
+      picture: workspaceData.user.picture,
+    } satisfies User;
+  }, [workspaceData?.user]);
 
-    const workspaceId = params.workspaceId;
-    const currentUser = useMemo(() => {
-      if (!workspaceData?.user) return null;
-  
-      return {
-        id: workspaceData.user.id,
-        full_name: workspaceData.user.given_name,
-        email: workspaceData.user.email,
-        picture: workspaceData.user.picture,
-      } satisfies User;
-    }, [workspaceData?.user]);
+  const { onlineUsers } = usePresence({
+    room: `workspace-${params.workspaceId}`,
+    currentUser,
+  });
 
-    const { onlineUsers } = usePresence({
-      room: `workspace-${workspaceId}`,
-      currentUser,
-    });
-    const onlineUserIds = useMemo( () => new Set(onlineUsers.map((u) => u.id)), [onlineUsers] );
+  const onlineUserIds = useMemo(
+    () => new Set(onlineUsers.map((u) => u.id)),
+    [onlineUsers]
+  );
+
+  // 🔹 Safe early return (after hooks)
+  if (error) {
+    return <h1>Error: {error.message}</h1>;
+  }
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
@@ -90,56 +97,50 @@ export function MemberOverview() {
         >
           {/* Header */}
           <div className="px-4 py-3 border-b bg-muted/40">
-            <h3 className="font-semibold text-sm text-foreground">Workspace Members</h3>
-            <p className="text-xs text-muted-foreground mt-0.5">
+            <h3 className="font-semibold text-sm">Workspace Members</h3>
+            <p className="text-xs text-muted-foreground">
               Manage and view your team
             </p>
           </div>
 
-          {/* Search Bar */}
-          <div className="p-3 border-b bg-background/70">
+          {/* Search */}
+          <div className="p-3 border-b">
             <div className="relative">
               <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
               <Input
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                className="pl-9 h-9 text-sm rounded-lg focus-visible:ring-1 focus-visible:ring-primary/50"
+                className="pl-9 h-9 text-sm"
                 placeholder="Search members..."
               />
             </div>
           </div>
 
-          {/* Members List */}
-          <div className="max-h-72 overflow-y-auto scrollbar-thin scrollbar-thumb-muted scrollbar-thumb-rounded-xl">
+          {/* Members */}
+          <div className="max-h-72 overflow-y-auto">
             {isLoading ? (
               <div className="p-3 space-y-2.5">
                 {Array.from({ length: 6 }).map((_, i) => (
-                  <div
-                    key={i}
-                    className="flex items-center gap-3 px-2 py-2 rounded-md hover:bg-muted/20 transition-colors"
-                  >
-                    {/* Avatar Skeleton */}
+                  <div key={i} className="flex gap-3 px-2 py-2">
                     <Skeleton className="size-9 rounded-full" />
-
-                    {/* Text Skeleton */}
                     <div className="flex-1 space-y-1.5">
-                      <Skeleton className="h-3 w-28 rounded-md" />
-                      <Skeleton className="h-2.5 w-20 rounded-md opacity-80" />
+                      <Skeleton className="h-3 w-28" />
+                      <Skeleton className="h-2.5 w-20" />
                     </div>
-
-                    {/* Role badge skeleton */}
-                    <Skeleton className="h-5 w-12 rounded-md" />
+                    <Skeleton className="h-5 w-12" />
                   </div>
                 ))}
               </div>
-            ) : error ? (
-              <div className="p-4 text-center text-sm text-red-500">
-                Failed to load members.
-              </div>
-            ) : filteredMembers?.length ? (
+            ) : filteredMembers.length ? (
               <div className="flex flex-col gap-1 p-2">
                 {filteredMembers.map((member) => (
-                  <MemberItems member={member} key={member.id} isOnline={member.id ? onlineUserIds.has(member.id) : false} />
+                  <MemberItems
+                    key={member.id}
+                    member={member}
+                    isOnline={
+                      member.id ? onlineUserIds.has(member.id) : false
+                    }
+                  />
                 ))}
               </div>
             ) : (

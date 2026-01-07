@@ -2,7 +2,6 @@
 
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Image from "next/image";
-import { motion } from "framer-motion";
 import { MessageSquare } from "lucide-react";
 import { SafeContent } from "@/components/rich-text-editor/safeContent";
 import { getAvatar } from "@/lib/get-avatar";

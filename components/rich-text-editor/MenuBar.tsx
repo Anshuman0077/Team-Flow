@@ -1,6 +1,6 @@
 "use client";
 
-import { Editor, markdown, useEditorState } from "@tiptap/react";
+import { Editor, useEditorState } from "@tiptap/react";
 import { Tooltip, TooltipProvider, TooltipTrigger, TooltipContent } from "../ui/tooltip";
 import { Toggle } from "../ui/toggle";
 import { Bold, Code, Italic, List, ListOrdered, Redo, Strikethrough, Undo } from "lucide-react";

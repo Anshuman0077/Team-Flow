@@ -2,7 +2,7 @@
 import Link from "next/link";
 import Logo from "@/public/logo/Logo.png";
 import { Menu, X } from "lucide-react";
-import { Button, buttonVariants } from "@/components/ui/button";
+import { buttonVariants } from "@/components/ui/button";
 import React from "react";
 import { cn } from "@/lib/utils";
 import Image from "next/image";

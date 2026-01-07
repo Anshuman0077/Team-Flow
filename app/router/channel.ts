@@ -38,7 +38,7 @@ export const createChannel = base
   })
   .input(ChannelNameSchema)
   .output(z.custom<Channel>())
-  .handler(async ({ input, errors, context }) => {
+  .handler(async ({ input, context }) => {
     const channel = await prisma.channel.create({
       data: {
         name: input.name,

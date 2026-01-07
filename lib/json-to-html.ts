@@ -6,7 +6,7 @@ export function convertJSONTOHtml(jsonContent: JSONContent): string {
     try {
         const content = typeof jsonContent === "string" ? JSON.parse(jsonContent) : jsonContent;
         return generateHTML(content , baseExtensions);
-    } catch (error) {
+    } catch  {
         console.log("Error converting json to html");
         return "";        
     }

@@ -6,19 +6,17 @@ import Image from "next/image";
 import { TextEffect } from "@/components/ui/text-effect";
 import { AnimatedGroup } from "@/components/ui/animated-group";
 import { HeroHeader } from "../../../components/header";
-import BackgorundImage from "@/public/backgorund/NightBg.png"
-import HeroDark from "@/public/screenshot/ScreenShot1.png"
-import HeroLight from  "@/public/screenshot/ScreenShot2.png"
+import BackgorundImage from "@/public/backgorund/NightBg.png";
+import HeroDark from "@/public/screenshot/ScreenShot1.png";
+import HeroLight from "@/public/screenshot/ScreenShot2.png";
 
-import ArcjetLogo from "@/public/companies/Arcjet.png"
-import Kinde from "@/public/companies/Kinde.png"
-import Orpc from "@/public/companies/Orpc.png"
-import Vercel from "@/public/companies/Vercel.png"
-import NeonDB from "@/public/companies/NeonDB.png"
-import Prisma from "@/public/companies/Prisma.png"
-import MotionLogo from "@/public/companies/Motion.png"
-
-
+import ArcjetLogo from "@/public/companies/Arcjet.png";
+import Kinde from "@/public/companies/Kinde.png";
+import Orpc from "@/public/companies/Orpc.png";
+import Vercel from "@/public/companies/Vercel.png";
+import NeonDB from "@/public/companies/NeonDB.png";
+import Prisma from "@/public/companies/Prisma.png";
+import MotionLogo from "@/public/companies/Motion.png";
 
 // Animation configuration for framer-motion variants
 // This defines how elements appear and disappear with animations
@@ -119,7 +117,7 @@ export default function HeroSection() {
                     className="hover:bg-background dark:hover:border-t-border bg-muted group mx-auto flex w-fit items-center gap-4 rounded-full border p-1 pl-4 shadow-md shadow-zinc-950/5 transition-colors duration-300 dark:border-t-white/5 dark:shadow-zinc-950"
                   >
                     <span className="text-foreground text-sm">
-                      Introducing New AI features   
+                      Introducing New AI features
                     </span>
                     <span className="dark:border-background block h-4 w-0.5 border-l bg-white dark:bg-zinc-700"></span>
 
@@ -144,7 +142,7 @@ export default function HeroSection() {
                   as="h1" // Render as h1 tag
                   className="mx-auto mt-8 max-w-4xl text-balance text-5xl max-md:font-semibold md:text-7xl lg:mt-16 xl:text-[5.25rem]"
                 >
-                 The AI-ready home for team commutication
+                  The AI-ready home for team commutication
                 </TextEffect>
 
                 {/* Subheading with animation */}
@@ -156,8 +154,8 @@ export default function HeroSection() {
                   as="p" // Render as paragraph
                   className="mx-auto mt-8 max-w-2xl text-balance text-lg"
                 >
-                 Team-Flow orgainzes conversation into channels with threads, 
-                 is realtime, and AI to keep teams in sync
+                  Team-Flow orgainzes conversation into channels with threads,
+                  is realtime, and AI to keep teams in sync
                 </TextEffect>
 
                 {/* Call-to-action buttons with staggered animation */}
@@ -304,7 +302,7 @@ export default function HeroSection() {
               <div className="flex">
                 <Image
                   className="mx-auto h-7 object-contain"
-                  src={Orpc}    
+                  src={Orpc}
                   alt="Lemon Squeezy Logo"
                 />
               </div>
@@ -316,24 +314,12 @@ export default function HeroSection() {
                 />
               </div>
               <div className="flex">
-                <img
-                  className="mx-auto h-7 w-fit dark:invert"
+                <Image
+                  className="mx-auto h-7 w-auto dark:invert object-contain"
                   src="https://html.tailus.io/blocks/customers/lilly.svg"
                   alt="Lilly Logo"
-                  height="28"
-                  width="auto"
                 />
               </div>
-
-              {/* <div className="flex">
-                <img
-                  className="mx-auto h-6 w-fit dark:invert"
-                  src="https://html.tailus.io/blocks/customers/openai.svg"
-                  alt="OpenAI Logo"
-                  height="24"
-                  width="auto"
-                />
-              </div> */}
             </div>
           </div>
         </section>

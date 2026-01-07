@@ -1,6 +1,6 @@
 
 import { KindeUser } from '@kinde-oss/kinde-auth-nextjs';
-import arcjet, { detectBot, sensitiveInfo, shield, slidingWindow } from "@/lib/arcjet"
+import arcjet, { sensitiveInfo, slidingWindow } from "@/lib/arcjet"
 import { base } from "../base";
 
 

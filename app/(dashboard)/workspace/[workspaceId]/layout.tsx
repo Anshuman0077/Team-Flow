@@ -15,7 +15,7 @@ interface ChannelListLayoutProps {
     }
 }
 
-const ChannelListLayout = async ({ children, params }: ChannelListLayoutProps) => {
+const ChannelListLayout = async ({ children }: ChannelListLayoutProps) => {
     const queryClient = getQueryClient();
     
     try {
