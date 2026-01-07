@@ -8,22 +8,22 @@ import { getQueryClient, HydrateClient } from '@/lib/query/hydration'
 import { orpc } from '@/lib/orpc'
 import { WorkspaceMembersList } from './_components/WorkspaceMembersList'
 
-interface ChannelListLayoutProps {
-    children: ReactNode
+interface LayoutProps {
+    children: ReactNode;
     params: {
-        workspaceId: string
-    }
-}
+      workspaceId: string;
+    };
+  }
 
-const ChannelListLayout = async ({ children }: ChannelListLayoutProps) => {
+const ChannelListLayout = async ({   children,
+    params, }: LayoutProps) => {
     const queryClient = getQueryClient();
     
     try {
         await queryClient.prefetchQuery(orpc.channel.list.queryOptions());
-    } catch (error) {
+      } catch (error) {
         console.error("Error prefetching channels:", error);
-        // Don't throw, let the client component handle the error
-    }
+      }
 
     return (
         <div className="flex h-full w-full">
@@ -72,13 +72,8 @@ const ChannelListLayout = async ({ children }: ChannelListLayoutProps) => {
                     </Collapsible>
                 </div>
             </div>
-            
             {/* Main Content */}
-
             {children}
-            {/* <div className="flex-1 overflow-hidden bg-background">
-                {children}
-            </div> */}
         </div>
     )
 }
