@@ -80,6 +80,7 @@ export const MessageInputForm = ({ channelId , user }: MessageInputFormProps) =>
           authorName: user.given_name ?? "John Doe",
           authorAvatar: getAvatar(user.picture , user.email!),
           channelId: channelId,
+          threadsId: null
         };
 
         queryClient.setQueryData<InfiniteMessages>(["message.list", channelId] , (old) => {
