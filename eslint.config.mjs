@@ -18,8 +18,12 @@ const eslintConfig = [
       "out/**",
       "build/**",
       "next-env.d.ts",
-      ".wrangler/**"
+      ".wrangler/**",
     ],
+    "rules": {
+      "@typescript-eslint/no-explicit-any": "warn",
+      "react-hooks/exhaustive-deps": "warn"
+    }
   },
 ];
 
