@@ -21,7 +21,6 @@ export function MessageList() {
   const { channelId } = useParams<{ channelId: string }>();
   const [hasInitialScrolled, setHasInitialScrolled] = useState(false);
   const [showScrollToBottom, setShowScrollToBottom] = useState(false);
-  const [unreadCount, setUnreadCount] = useState(0);
 
   const scrollRef = useRef<HTMLDivElement | null>(null);
   const loadingRef = useRef(false);
@@ -78,10 +77,8 @@ export function MessageList() {
       const atBottom = el.scrollHeight - el.scrollTop - el.clientHeight <= 200;
       if (atBottom) {
         requestAnimationFrame(() => (el.scrollTop = el.scrollHeight));
-        setUnreadCount(0);
         setShowScrollToBottom(false);
       } else {
-        setUnreadCount((c) => c + 1);
         setShowScrollToBottom(true);
       }
     } else if (!hasInitialScrolled && currentItemsLength > 0) {
@@ -97,7 +94,6 @@ export function MessageList() {
       setTimeout(() => {
         if (scrollRef.current) {
           scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
-          setUnreadCount(0);
           setShowScrollToBottom(false);
         }
       }, 100);
@@ -194,7 +190,7 @@ export function MessageList() {
       top: scrollRef.current.scrollHeight,
       behavior: smooth ? "smooth" : "auto",
     });
-    setUnreadCount(0);
+    // setUnreadCount(0);
     setShowScrollToBottom(false);
   };
 

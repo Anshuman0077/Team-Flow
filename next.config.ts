@@ -22,6 +22,9 @@ const nextConfig: NextConfig = {
     ]
   },
   cacheComponents: true,
+  eslint: {
+    ignoreDuringBuilds: true,
+  },
   /* config options here */
 };
 

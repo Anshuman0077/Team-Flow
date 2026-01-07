@@ -51,7 +51,7 @@ const [editorkey , setEditorKey] = useState(0)
   // ✔️ IMPORTANT FIX: update threadId when switching threads
   useEffect(() => {
     form.setValue("threadId", threadId);
-  }, [threadId]);
+  }, [threadId, form]);
 
   const createMessageMutation = useMutation(
     orpc.message.create.mutationOptions({

@@ -29,7 +29,9 @@ export function MemberOverview() {
   );
 
   // 🔹 Derived data
-  const members = membersData ?? [];
+  const members = useMemo(() => {
+    return membersData ?? [];
+  }, [membersData]);
 
   const filteredMembers = useMemo(() => {
     const q = search.trim().toLowerCase();

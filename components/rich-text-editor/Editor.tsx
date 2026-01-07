@@ -5,8 +5,13 @@ import { MenuBar } from './MenuBar'
 import { ReactNode, useEffect } from 'react'
 import React from 'react'
 
+
+interface RichTextField {
+    value: string;
+    onChange: (value: string) => void;
+  }
 interface iAppProps {
-    field: any;
+    field: RichTextField;
     sendButton: ReactNode;
     footerLeft?: ReactNode;
     onReset?: () => void; // ✅ Add reset prop
@@ -46,9 +51,10 @@ export function RichTextEditor({ field, sendButton, footerLeft, onReset, isSubmi
     // ✅ Clear editor when form is reset
     useEffect(() => {
         if (editor && field.value === "") {
-            editor.commands.clearContent();
+          editor.commands.clearContent();
+          onReset?.();
         }
-    }, [editor, field.value]);
+      }, [editor, field.value, onReset]);
 
     // ✅ Clear editor when submission completes successfully
     useEffect(() => {

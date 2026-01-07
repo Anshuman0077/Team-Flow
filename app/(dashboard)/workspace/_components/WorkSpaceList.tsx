@@ -2,13 +2,11 @@
 
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipProvider } from "@/components/ui/tooltip";
-import { usePresence } from "@/hooks/use-presence";
 import { orpc } from "@/lib/orpc";
 import { cn } from "@/lib/utils";
 import { LoginLink } from "@kinde-oss/kinde-auth-nextjs/components";
 import { TooltipTrigger } from "@radix-ui/react-tooltip";
-import { useQuery, useSuspenseQuery } from "@tanstack/react-query";
-import { useParams } from "next/navigation";
+import { useSuspenseQuery } from "@tanstack/react-query";
 
 const colorCombinations = [
     "bg-blue-500 hover:bg-blue-600 text-white",       

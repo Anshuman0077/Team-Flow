@@ -23,6 +23,8 @@ import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
 
+
+
 export function CreateNewChannel() {
   const [open, setOpen] = useState(false);
   const queryClient = useQueryClient();
@@ -58,7 +60,7 @@ export function CreateNewChannel() {
         // Optimistically update the cache
         queryClient.setQueryData(
           orpc.channel.list.queryKey(),
-          (old: any) => {
+          (old) => {
             if (!old) return old;
             return {
               ...old,

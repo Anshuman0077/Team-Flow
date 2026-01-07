@@ -19,8 +19,10 @@ interface Channel {
     __optimistic?: boolean; // Flag for optimistic updates
 }
 
+
+
 export function ChannelList() {
-    const { data, error, isLoading, isFetching } = useQuery(orpc.channel.list.queryOptions());
+    const { data, error, isLoading } = useQuery(orpc.channel.list.queryOptions());
 
     const { workspaceId, channelId } = useParams<{ workspaceId: string, channelId: string }>()
 

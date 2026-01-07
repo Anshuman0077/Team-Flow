@@ -72,7 +72,7 @@ export function ReactionsBar({
           await queryClient.cancelQueries({ queryKey: listOptions.queryKey });
           const prevThread = queryClient.getQueryData(listOptions.queryKey);
 
-          queryClient.setQueryData(listOptions.queryKey, (old: any) => {
+          queryClient.setQueryData(listOptions.queryKey, (old) => {
             if (!old) return old;
 
             // if toggled on the parent message (thread root)
@@ -89,7 +89,7 @@ export function ReactionsBar({
 
             return {
               ...old,
-              messages: old.messages.map((m: any) =>
+              messages: old.messages.map((m) =>
                 m.id === vars.messageId
                   ? { ...m, reactions: bump(m.reactions ?? []) }
                   : m
