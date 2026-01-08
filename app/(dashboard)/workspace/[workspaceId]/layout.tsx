@@ -10,22 +10,20 @@ import { WorkspaceMembersList } from './_components/WorkspaceMembersList'
 
 interface LayoutProps {
     children: ReactNode;
-    params: {
-      workspaceId: string;
-    };
   }
 
 export default async function ChannelListLayout(
     {
-        children,
-        params,
-
+        children
     }: LayoutProps
 ) {
     const queryClient = getQueryClient();
     
     try {
-        await queryClient.prefetchQuery(orpc.channel.list.queryOptions());
+        await queryClient.prefetchQuery(
+            orpc.channel.list.queryOptions({
+            })
+          );
       } catch (error) {
         console.error("Error prefetching channels:", error);
       }
