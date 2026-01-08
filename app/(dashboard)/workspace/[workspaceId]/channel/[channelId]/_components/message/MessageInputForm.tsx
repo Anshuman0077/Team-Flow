@@ -19,7 +19,7 @@ import {
 } from "@/components/ui/form";
 import { MessageComposer } from "./MessageComposer";
 import { useAttachmentUpload } from "@/hooks/use-attatchment";
-import { Prisma } from "@prisma/client";
+import type { Message } from "@prisma/client"; // ✅ Import only type
 
 import { KindeUser } from "@kinde-oss/kinde-auth-nextjs";
 import { getAvatar } from "@/lib/get-avatar";
@@ -30,14 +30,14 @@ interface MessageInputFormProps {
   user: KindeUser<Record<string, unknown>>;
 }
 
-type MessagePage = { items: Message[], nextCursor?: string };
+// Types for React Query infinite data
+type MessagePage = { items: Message[]; nextCursor?: string };
 type InfiniteMessages = InfiniteData<MessagePage>;
-type Message = Prisma.MessageGetPayload<{}>;
 
-export const MessageInputForm = ({ channelId , user }: MessageInputFormProps) => {
+export const MessageInputForm = ({ channelId, user }: MessageInputFormProps) => {
   const queryClient = useQueryClient();
   const upload = useAttachmentUpload();
-  const {send} = useChannelRealtime()
+  const { send } = useChannelRealtime();
 
   const form = useForm<CreateMessageSchema>({
     resolver: zodResolver(createMessageSchema),
@@ -48,13 +48,9 @@ export const MessageInputForm = ({ channelId , user }: MessageInputFormProps) =>
     },
   });
 
-  // ✅ Keep imageUrl in sync with upload.stageUrl
+  // Keep imageUrl in sync with upload.stageUrl
   useEffect(() => {
-    if (upload.stageUrl) {
-      form.setValue("imageUrl", upload.stageUrl);
-    } else {
-      form.setValue("imageUrl", undefined);
-    }
+    form.setValue("imageUrl", upload.stageUrl ?? undefined);
   }, [upload.stageUrl, form]);
 
   const createMessageMutation = useMutation({
@@ -63,11 +59,10 @@ export const MessageInputForm = ({ channelId , user }: MessageInputFormProps) =>
         await queryClient.cancelQueries({
           queryKey: ["message.list", channelId],
         });
-      
+
         const previousData = queryClient.getQueriesData<InfiniteMessages>({
           queryKey: ["message.list", channelId],
         });
-      
 
         const tempId = `optimistic-${crypto.randomUUID()}`;
 
@@ -80,98 +75,66 @@ export const MessageInputForm = ({ channelId , user }: MessageInputFormProps) =>
           authorId: user.id,
           authorEmail: user.email!,
           authorName: user.given_name ?? "John Doe",
-          authorAvatar: getAvatar(user.picture , user.email!),
-          channelId: channelId,
-          threadsId: null
+          authorAvatar: getAvatar(user.picture, user.email!),
+          channelId,
+          threadsId: null,
         };
 
-        queryClient.setQueryData<InfiniteMessages>(["message.list", channelId] , (old) => {
+        queryClient.setQueryData<InfiniteMessages>(["message.list", channelId], (old) => {
           if (!old) {
             return {
-              pages: [
-                {
-                  items: [optimisticMessage],
-                  nextCursor: undefined,
-                },
-              ],
+              pages: [{ items: [optimisticMessage], nextCursor: undefined }],
               pageParams: [undefined],
             } satisfies InfiniteMessages;
           }
 
-          const firstPage = old.pages[0] ?? {
-            items: [],
-            nextCursor: undefined,
-          };
-
+          const firstPage = old.pages[0] ?? { items: [], nextCursor: undefined };
           const updatedFirstPage: MessagePage = {
             ...firstPage,
             items: [optimisticMessage, ...firstPage.items],
           };
-           
-          return {
-            ...old,
-            pages: [updatedFirstPage, ...old.pages.slice(1)],
-          };
 
-        } 
-      );
+          return { ...old, pages: [updatedFirstPage, ...old.pages.slice(1)] };
+        });
 
-      return{
-        previousData,
-        tempId,
-      }
+        return { previousData, tempId };
       },
     }),
-    onSuccess: (data , _variables, context) => {
-      queryClient.setQueryData<InfiniteMessages>(
-        ["message.list", channelId],
-        (old) => {
-          if (!old) return old;
+    onSuccess: (data, _variables, context) => {
+      queryClient.setQueryData<InfiniteMessages>(["message.list", channelId], (old) => {
+        if (!old) return old;
 
-          const updatedPages = old.pages.map((page) => ({
-            ...page,
-            items: page.items.map((m) => m.id === context.tempId
-            ? {
-              ...data,
-            }
-            : m
+        const updatedPages = old.pages.map((page) => ({
+          ...page,
+          items: page.items.map((m) =>
+            m.id === context.tempId
+              ? { ...data } // replace temp with real message
+              : m
           ),
-          }));
+        }));
 
-          return {...old, pages: updatedPages };
-        }
-      );
+        return { ...old, pages: updatedPages };
+      });
 
       toast.success("Message sent successfully!");
 
       // Reset form and upload state
-      form.reset({
-        channelId,
-        content: "",
-        imageUrl: undefined,
-      });
+      form.reset({ channelId, content: "", imageUrl: undefined });
       upload.clear();
 
-      send({type: "message:created", payload: {message: data}})
+      send({ type: "message:created", payload: { message: data } });
 
-      // ✅ IMPROVED: Trigger scroll in MessageList with custom data
-      const event = new CustomEvent("newMessageSent", {
-        detail: { timestamp: Date.now() }
-      });
+      // Trigger scroll in MessageList
+      const event = new CustomEvent("newMessageSent", { detail: { timestamp: Date.now() } });
       window.dispatchEvent(event);
     },
-
-    onError: (_err, _variables , context) => {
+    onError: (_err, _variables, context) => {
       console.error("Frontend message creation error:", _err);
 
       if (context?.previousData) {
-        queryClient.setQueryData(
-          ["message.list", channelId],
-          context.previousData
-        );
+        queryClient.setQueryData(["message.list", channelId], context.previousData);
       }
-      return toast.error("Something went wrong");
-     
+      toast.error("Something went wrong");
     },
   });
 
