@@ -19,7 +19,8 @@ import {
 } from "@/components/ui/form";
 import { MessageComposer } from "./MessageComposer";
 import { useAttachmentUpload } from "@/hooks/use-attatchment";
-import { Message } from "@prisma/client";
+import { Prisma } from "@prisma/client";
+
 import { KindeUser } from "@kinde-oss/kinde-auth-nextjs";
 import { getAvatar } from "@/lib/get-avatar";
 import { useChannelRealtime } from "@/provider/ChannelRealtimeProvider";
@@ -31,6 +32,7 @@ interface MessageInputFormProps {
 
 type MessagePage = { items: Message[], nextCursor?: string };
 type InfiniteMessages = InfiniteData<MessagePage>;
+type Message = Prisma.MessageGetPayload<{}>;
 
 export const MessageInputForm = ({ channelId , user }: MessageInputFormProps) => {
   const queryClient = useQueryClient();
