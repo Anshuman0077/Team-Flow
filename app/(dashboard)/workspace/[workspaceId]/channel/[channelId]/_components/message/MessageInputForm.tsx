@@ -21,7 +21,7 @@ import { MessageComposer } from "./MessageComposer";
 import { useAttachmentUpload } from "@/hooks/use-attatchment";
 import type { Message } from "@prisma/client";
 
-import { KindeUser } from "@kinde-oss/kinde-auth-nextjs";
+import { KindeUser } from "@kinde-oss/kinde-auth-nextjs"; 
 import { getAvatar } from "@/lib/get-avatar";
 import { useChannelRealtime } from "@/provider/ChannelRealtimeProvider";
 

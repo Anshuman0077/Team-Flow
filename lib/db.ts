@@ -1,16 +1,19 @@
 // lib/db.ts
 import { PrismaClient } from "@prisma/client";
+import { neon } from "@neondatabase/serverless";
 
-const globalForPrisma = globalThis as unknown as {
-  prisma: PrismaClient | undefined;
-};
+const sql = neon(process.env.DATABASE_URL!);
+
+const prismaClientSingleton = () =>
+  new PrismaClient();
+
+declare global {
+  var prismaGlobal: ReturnType<typeof prismaClientSingleton> | undefined;
+}
 
 export const prisma =
-  globalForPrisma.prisma ??
-  new PrismaClient({
-    log: ["error"],
-  });
+  global.prismaGlobal ?? prismaClientSingleton();
 
 if (process.env.NODE_ENV !== "production") {
-  globalForPrisma.prisma = prisma;
+  global.prismaGlobal = prisma;
 }
