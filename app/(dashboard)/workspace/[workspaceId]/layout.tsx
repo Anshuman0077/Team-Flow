@@ -8,16 +8,18 @@ import { getQueryClient, HydrateClient } from '@/lib/query/hydration'
 import { orpc } from '@/lib/orpc'
 import { WorkspaceMembersList } from './_components/WorkspaceMembersList'
 
-interface LayoutProps {
-    children: ReactNode;
-    params: { workspaceId: string }
-  }
+// interface LayoutProps {
+//     children: ReactNode;
+//     params: { workspaceId: string }
+//   }
 
-export default async function ChannelListLayout(
-    {
-        children,
-    }: LayoutProps
-) {
+export default async function ChannelListLayout({
+ children
+}: {
+    children: React.ReactNode
+
+})
+ {
     const queryClient = getQueryClient();
     
     try {
