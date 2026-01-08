@@ -15,7 +15,13 @@ interface LayoutProps {
     };
   }
 
-const ChannelListLayout = async ({children}: LayoutProps) => {
+export default async function ChannelListLayout(
+    {
+        children,
+        params,
+
+    }: LayoutProps
+) {
     const queryClient = getQueryClient();
     
     try {
@@ -76,5 +82,3 @@ const ChannelListLayout = async ({children}: LayoutProps) => {
         </div>
     )
 }
-
-export default ChannelListLayout
