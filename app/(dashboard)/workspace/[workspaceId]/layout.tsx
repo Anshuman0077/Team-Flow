@@ -15,8 +15,7 @@ interface LayoutProps {
     };
   }
 
-const ChannelListLayout = async ({   children,
-    params, }: LayoutProps) => {
+const ChannelListLayout = async ({children}: LayoutProps) => {
     const queryClient = getQueryClient();
     
     try {

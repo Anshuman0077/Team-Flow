@@ -314,11 +314,11 @@ export default function HeroSection() {
                 />
               </div>
               <div className="flex">
-                <Image
+                {/* <Image
                   className="mx-auto h-7 w-auto dark:invert object-contain"
                   src="https://html.tailus.io/blocks/customers/lilly.svg"
                   alt="Lilly Logo"
-                />
+                /> */}
               </div>
             </div>
           </div>
