@@ -1,19 +1,25 @@
-// lib/db.ts
-import { PrismaClient } from "@prisma/client";
-import { neon } from "@neondatabase/serverless";
+import "dotenv/config"
+import { PrismaClient } from "@prisma/client"
+import { PrismaNeon } from "@prisma/adapter-neon"
 
-const sql = neon(process.env.DATABASE_URL!);
+const adapter = new PrismaNeon({
+  connectionString: process.env.DATABASE_URL!,
+})
 
-const prismaClientSingleton = () =>
-  new PrismaClient();
-
-declare global {
-  var prismaGlobal: ReturnType<typeof prismaClientSingleton> | undefined;
+// 👇 Add global type definition
+const globalForPrisma = globalThis as unknown as {
+  prisma?: PrismaClient
 }
 
 export const prisma =
-  global.prismaGlobal ?? prismaClientSingleton();
+  globalForPrisma.prisma ??
+  new PrismaClient({
+    adapter,
+    log: ["error"],
+  })
 
 if (process.env.NODE_ENV !== "production") {
-  global.prismaGlobal = prisma;
+  globalForPrisma.prisma = prisma
 }
+
+export default prisma

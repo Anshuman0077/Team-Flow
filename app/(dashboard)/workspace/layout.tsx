@@ -6,12 +6,22 @@ import { UserNav } from './_components/UserNav'
 import { getQueryClient, HydrateClient } from '@/lib/query/hydration'
 import { orpc } from '@/lib/orpc'
 
-const WorkSpaceLayout = async ({children} : {children: ReactNode}) => {
 
-  
 
+interface ChannelListLayoutProps {
+  children: ReactNode
+  params: {
+      workspaceId: string
+  }
+}
+const WorkSpaceLayout = async ({ children, params }: ChannelListLayoutProps) => {
   const queryClient = getQueryClient()
 
+  try {
+    await queryClient.prefetchQuery(orpc.channel.list.queryOptions());
+  } catch (error) {
+    console.error("Error prefetching channels:", error);
+  }
   await queryClient.prefetchQuery(orpc.workspace.list.queryOptions());
 
 
