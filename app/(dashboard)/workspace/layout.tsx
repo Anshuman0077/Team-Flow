@@ -10,11 +10,8 @@ import { orpc } from '@/lib/orpc'
 
 interface ChannelListLayoutProps {
   children: ReactNode
-  params: {
-      workspaceId: string
-  }
 }
-const WorkSpaceLayout = async ({ children, params }: ChannelListLayoutProps) => {
+const WorkSpaceLayout = async ({ children}: ChannelListLayoutProps) => {
   const queryClient = getQueryClient()
 
   try {
